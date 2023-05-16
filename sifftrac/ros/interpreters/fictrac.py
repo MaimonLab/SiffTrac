@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Union
 
-import polars as pl
+import pandas as pd
 import numpy as np
 
-from siffpy.sifftrac.utils import BallParams
-from siffpy.sifftrac.ros.ros_interpreter import ROSInterpreter, ROSLog
-from siffpy.sifftrac.ros.config_file_params import ConfigParams, ConfigFileParamsMixin
-from siffpy.sifftrac.ros.git_validation import GitConfig, GitValidatedMixin
+from ...utils import BallParams
+from ..ros_interpreter import ROSInterpreter, ROSLog
+from ..config_file_params import ConfigParams, ConfigFileParamsMixin
+from ..git_validation import GitConfig, GitValidatedMixin
 
 FICTRAC_COLUMNS = [
     'timestamp',
@@ -53,7 +53,7 @@ class FicTracLog(ROSLog):
                 for {self.__class__.__name__} log files.
             """)
         
-        self.df = pl.read_csv(path, sep=',')
+        self.df = pd.read_csv(path, sep=',')
 
 class FicTracInterpreter(GitValidatedMixin, ConfigFileParamsMixin, ROSInterpreter):
     """ ROS interpreter for the ROSFicTrac node"""

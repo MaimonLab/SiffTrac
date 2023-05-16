@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import Union
 
-import polars as pl
+import pandas as pd
 import numpy as np
 from ruamel.yaml import YAML
 
-from siffpy.sifftrac.utils import BallParams
-from siffpy.sifftrac.ros.ros_interpreter import ROSInterpreter, ROSLog
-from siffpy.sifftrac.ros.git_validation import GitConfig, GitValidatedMixin
-from siffpy.sifftrac.ros.config_file_params import ConfigParams, ConfigFileParamsMixin
+from ...utils import BallParams
+from ..ros_interpreter import ROSInterpreter, ROSLog
+from ..git_validation import GitConfig, GitValidatedMixin
+from ..config_file_params import ConfigParams, ConfigFileParamsMixin
 
 class ProjectorLog(ROSLog):
 
