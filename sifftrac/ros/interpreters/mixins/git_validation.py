@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import Union,Optional
 import logging
 from dataclasses import dataclass
 from datetime import datetime
@@ -13,13 +13,13 @@ class GitConfig():
     """
     A class for storing the git configuration for a package.
     """
-    repo_name : str = None
-    branch : str = None
-    commit : str = None
-    commit_time : str = None
-    commit_hash : str = None
-    package : str = None
-    executable : Union[str,list[str]] = None
+    repo_name : Optional[str] = None
+    branch : Optional[str] = None
+    commit : Optional[str] = None
+    commit_time : Optional[str] = None
+    commit_hash : Optional[str] = None
+    package : Optional[str] = None
+    executable : Optional[Union[str,list[str]]] = None
 
 class GitValidatedMixin():
     """
@@ -27,6 +27,8 @@ class GitValidatedMixin():
     corresponding to the data being logged and ensures it's
     compatible with the interpreter.
     """
+
+    git_config : Union[GitConfig, list[GitConfig]] = []
 
     def __init__(self, file_path : Union[str, Path], *args, **kwargs):
         if not hasattr(self.__class__, 'git_config'):
@@ -48,7 +50,7 @@ class GitValidatedMixin():
 
     def validate_git(self, file_path : Union[str, Path]):
         """
-        Validates the git inforrmation file for the interpreter.
+        Validates the git information file for the interpreter.
         """
 
         if isinstance(file_path, str):
@@ -150,6 +152,16 @@ def is_valid_git(config_from_yaml, git_config : GitConfig)->str:
 
     return ret_string
 
+class GitValidatedUpOneLevelMixin(GitValidatedMixin):
+    """ For files one directory removed from the git """
+
+    def validate_git(self, file_path : Union[str, Path]):
+        """
+        Validates the git information file for the interpreter.
+        """
+
+        file_path = Path(file_path).parent.parent
+        super().validate_git(file_path)
 
         
 

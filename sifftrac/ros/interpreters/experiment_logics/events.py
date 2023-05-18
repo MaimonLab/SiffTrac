@@ -10,23 +10,24 @@ import numpy as np
 from ..ros_interpreter import ROSInterpreter, ROSLog
 from ..mixins.config_file_params import ConfigParams, ConfigFileUpOneLevelParamsMixin
 from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
-from ..mixins.timepoints_mixins import HasStartAndEndpoints
 
 if TYPE_CHECKING:
     from ....utils.types import PathLike
 
-VR_COLUMNS = [
+EVENT_COLUMNS = [
     'timestamp',
-    'frame_id',
-    'rotation_x',
-    'rotation_y',
-    'rotation_z',
-    'position_x',
-    'position_y',
-    'position_z',
+    'Event type',
+    'Event message'
 ]
 
-class VRPositionLog(ROSLog):
+SCANIMAGE_EVENTS = [
+    'AcquisitionPeriod',
+    'SetPmtsScanImage',
+    'StopAcqScanImage',
+]
+
+
+class EventsLog(ROSLog):
 
     @classmethod
     def isvalid(cls, path : 'PathLike')->bool:
@@ -36,7 +37,7 @@ class VRPositionLog(ROSLog):
         if not valid:
             return False
         cols = pd.read_csv(path, sep=',', nrows=1).columns
-        valid &= all([col in cols for col in VR_COLUMNS])
+        valid &= all([col in cols for col in EVENT_COLUMNS])
         return valid
 
     def open(self, path : 'PathLike'):
@@ -48,16 +49,16 @@ class VRPositionLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
+        self.df.index = pd.to_datetime(self.df['timestamp'], unit='ns')
 
-class VRPositionInterpreter(
+class EventsInterpreter(
     GitValidatedUpOneLevelMixin,
     ConfigFileUpOneLevelParamsMixin,
-    HasStartAndEndpoints,
     ROSInterpreter
     ):
     """ ROS interpreter for the ROSFicTrac node"""
 
-    LOG_TYPE = VRPositionLog
+    LOG_TYPE = EventsLog
     LOG_TAG = '.csv'
 
     git_config = [
@@ -92,18 +93,13 @@ class VRPositionInterpreter(
             return self.log.df
 
     @property
-    def x_position(self)->np.ndarray:
-        return self.df['position_x'].values
-        
+    def bar_events(self)->pd.DataFrame:
+        self.df.loc[self.df['Event type'] == 'BarSet']
+
     @property
-    def y_position(self)->np.ndarray:
-        return self.df['position_y'].values
-        
+    def temperature_events(self)->pd.DataFrame:
+        self.df.loc[self.df['Event type'] == 'WarnerTemperatureSet']
+
     @property
-    def heading(self)->np.ndarray:
-        return self.df['rotation_z'].values
-        
-    @property
-    def timestamp(self)->np.ndarray:
-        return self.df['timestamp'].values
-   
+    def scanimage_events(self)->pd.DataFrame:
+        self.df.loc[self.df['Event type'].isin(SCANIMAGE_EVENTS)]

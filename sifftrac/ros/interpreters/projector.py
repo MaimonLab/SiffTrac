@@ -1,36 +1,46 @@
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING
 
-import pandas as pd
-import numpy as np
 from ruamel.yaml import YAML
 
-from ...utils import BallParams
-from ..ros_interpreter import ROSInterpreter, ROSLog
-from ..git_validation import GitConfig, GitValidatedMixin
-from ..config_file_params import ConfigParams, ConfigFileParamsMixin
+from .ros_interpreter import ROSInterpreter, ROSLog
+from .mixins.git_validation import GitConfig, GitValidatedMixin
+from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
+
+if TYPE_CHECKING:
+    from ...utils.types import PathLike
 
 class ProjectorLog(ROSLog):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.OLD_PROJECTOR_SPEC = False
+
     @classmethod
-    def isvalid(cls, path : Path)->bool:
+    def isvalid(cls, path : 'PathLike')->bool:
         """ Checks extension, ideally do more """
-        valid = path.suffix == '.yaml'
+        path = Path(path)
+        valid = path.suffix == '.yaml' and 'projector_bar_specifications' in path.name
         #y = YAML()
         #y.load(path)
 
         return valid
 
-    def open(self, path : Path):
+    def open(self, path : 'PathLike'):
+        path = Path(path)
         if not self.isvalid(path):
             self.OLD_PROJECTOR_SPEC = True
             return
     
         y = YAML()
         info = y.load(path)
-        self.OLD_PROJECTOR_SPEC = not (info['start_bar_in_front'])
+        self.OLD_PROJECTOR_SPEC = not ('start_bar_in_front' in info.keys())
 
-class ProjectorInterpreter(GitValidatedMixin, ROSInterpreter):
+class ProjectorInterpreter(
+    ConfigFileParamsMixin,
+    GitValidatedMixin,
+    ROSInterpreter
+    ):
     """ ROS interpreter for the ROSFicTrac node"""
 
     LOG_TAG = '.yaml'
@@ -55,7 +65,7 @@ class ProjectorInterpreter(GitValidatedMixin, ROSInterpreter):
 
     def __init__(
             self,
-            file_path : Union[str, Path],
+            file_path : 'PathLike',
         ):
         self.exp_params = None #TODO implement this so that coordinate transforms
         # can be done appropriately
@@ -63,6 +73,7 @@ class ProjectorInterpreter(GitValidatedMixin, ROSInterpreter):
 
     @property
     def OLD_PROJECTOR_SPEC(self)->bool:
+        self.log : ProjectorLog
         if hasattr(self.log, 'OLD_PROJECTOR_SPEC'):
             return self.log.OLD_PROJECTOR_SPEC
         else:

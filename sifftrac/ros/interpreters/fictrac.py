@@ -1,13 +1,17 @@
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import numpy as np
 
 from ...utils import BallParams
-from ..ros_interpreter import ROSInterpreter, ROSLog
-from ..config_file_params import ConfigParams, ConfigFileParamsMixin
-from ..git_validation import GitConfig, GitValidatedMixin
+from .ros_interpreter import ROSInterpreter, ROSLog
+from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
+from .mixins.git_validation import GitConfig, GitValidatedMixin
+from .mixins.timepoints_mixins import HasStartAndEndpoints
+
+if TYPE_CHECKING:
+    from ...utils.types import PathLike
 
 FICTRAC_COLUMNS = [
     'timestamp',
@@ -39,14 +43,18 @@ FICTRAC_COLUMNS = [
 class FicTracLog(ROSLog):
 
     @classmethod
-    def isvalid(cls, path : Path)->bool:
+    def isvalid(cls, path : 'PathLike')->bool:
         """ Checks extension and column titles """
+        path = Path(path)
         valid = path.suffix == '.csv'
-        cols = pl.scan_csv(path, sep=',', n_rows=1).columns
-        valid *= all([col in cols for col in FICTRAC_COLUMNS])
+        if not valid:
+            return False
+        cols = pd.read_csv(path, sep=',', nrows=1).columns
+        valid &= all([col in cols for col in FICTRAC_COLUMNS])
         return valid
 
-    def open(self, path : Path):
+    def open(self, path : 'PathLike'):
+        path = Path(path)
         if not self.isvalid(path):
             raise ValueError(f"""
                 File {path} does not have the correct extension
@@ -55,7 +63,12 @@ class FicTracLog(ROSLog):
         
         self.df = pd.read_csv(path, sep=',')
 
-class FicTracInterpreter(GitValidatedMixin, ConfigFileParamsMixin, ROSInterpreter):
+class FicTracInterpreter(
+    GitValidatedMixin,
+    ConfigFileParamsMixin,
+    HasStartAndEndpoints,
+    ROSInterpreter
+    ):
     """ ROS interpreter for the ROSFicTrac node"""
 
     LOG_TYPE = FicTracLog
@@ -76,7 +89,7 @@ class FicTracInterpreter(GitValidatedMixin, ConfigFileParamsMixin, ROSInterprete
 
     def __init__(
             self,
-            file_path : Union[str, Path],
+            file_path : 'PathLike',
             ball_params : BallParams = BallParams(),
         ):
         self.ball_params = ball_params
@@ -84,32 +97,36 @@ class FicTracInterpreter(GitValidatedMixin, ConfigFileParamsMixin, ROSInterprete
         super().__init__(file_path)
 
     @property
-    def df(self)->Union[pl.DataFrame, pl.LazyFrame]:
+    def df(self)->pd.DataFrame:
         if hasattr(self.log, 'df'):
             return self.log.df
 
     @property
     def x_position(self)->np.ndarray:
-        if self.experiment_config is None:
-            return self.log.df['integrated_position_lab_0'].to_numpy()
+        return (
+            self.df['integrated_position_lab_0'].values
+            * self.ball_params.radius
+        )
         
     @property
     def y_position(self)->np.ndarray:
-        if self.experiment_config is None:
-            return self.log.df['integrated_position_lab_1'].to_numpy()
+        return (
+            self.df['integrated_position_lab_1'].values
+            * self.ball_params.radius
+        )
         
     @property
     def heading(self)->np.ndarray:
-        if self.experiment_config is None:
-            return self.log.df['integrated_heading_lab'].to_numpy()
+        return self.df['integrated_heading_lab'].values
         
     @property
     def timestamp(self)->np.ndarray:
-        if self.experiment_config is None:
-            return self.log.df['timestamp'].to_numpy()
+        return self.df['timestamp'].values
     
     @property
     def movement_speed(self)->np.ndarray:
-        if self.experiment_config is None:
-            return self.log.df['animal_movement_speed'].to_numpy()
+        return (
+            self.df['animal_movement_speed'].values
+            * self.ball_params.radius
+        )
         

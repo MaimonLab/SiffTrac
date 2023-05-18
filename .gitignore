@@ -11,7 +11,7 @@
 *.hdf5
 *.DS_Store
 .DS_Store
-_version.py
+sifftrac/_version.py
 !/demo_notebooks/*.ipynb
 !/demo_notebooks/demo_data/*.siff
 !/demo_notebooks/demo_data/*.tiff

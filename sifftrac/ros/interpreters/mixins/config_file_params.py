@@ -4,11 +4,14 @@ for appropriate experimental parameters
 """
 
 from pathlib import Path
-from typing import Union, Any, Dict
+from typing import Any, Dict, TYPE_CHECKING
 import logging
 from dataclasses import dataclass, field
 
 from ruamel.yaml import YAML
+
+if TYPE_CHECKING:
+    from ....utils.types import PathLike
 
 @dataclass
 class ConfigParams():
@@ -27,9 +30,10 @@ class ConfigFileParamsMixin():
     compatible with the interpreter.
     """
 
-    def __init__(self, file_path : Union[str, Path], *args, **kwargs):
-        if isinstance(file_path, str):
-            file_path = Path(file_path)
+    config_params = ConfigParams()
+
+    def __init__(self, file_path : 'PathLike', *args, **kwargs):
+        file_path = Path(file_path)
         try:
             putative_config_file = next(file_path.parent.glob('*config.yaml'))
             if hasattr(self.__class__, 'config_params'):
@@ -52,10 +56,11 @@ class ConfigFileParamsMixin():
             self.experiment_config = None
         super().__init__(file_path, *args, **kwargs)
 
-    def validate_config(self, config_file_path : Path):
+    def validate_config(self, config_file_path : 'PathLike'):
         """
         Validates the configuration file for the interpreter.
         """
+        config_file_path = Path(config_file_path)
 
         # load the git state file
         config_yaml = YAML()
@@ -95,3 +100,15 @@ class ConfigFileParamsMixin():
                 )
             ) 
         self.experiment_config = configs
+
+class ConfigFileUpOneLevelParamsMixin(ConfigFileParamsMixin):
+    """
+    For config files that are one level up from the data file.
+    """
+
+    def validate_config(self, config_file_path : 'PathLike'):
+        """
+        Validates the configuration file for the interpreter.
+        """
+        config_file_path = Path(config_file_path).parent.parent
+        super().validate_config(config_file_path)

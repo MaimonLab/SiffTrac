@@ -9,8 +9,8 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 write_to = "sifftrac/_version.py"
 
-[tool.setuptools]
-packages = ["sifftrac"]
+[tool.setuptools.packages.find]
+exclude = ["test_notebooks*"]
 
 [project]
 name = "sifftrac"
