@@ -6,7 +6,7 @@ import pandas as pd
 from .ros_interpreter import ROSInterpreter, ROSLog
 from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 from .mixins.git_validation import GitConfig, GitValidatedMixin
-from .mixins.timepoints_mixins import HasStartAndEndpoints
+from .mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
     from ...utils.types import PathLike
@@ -40,12 +40,11 @@ class WarnerTemperatureLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
-        self.df.index = pd.to_datetime(self.df['timestamp'], unit='ns')
 
 class WarnerTemperatureInterpreter(
     GitValidatedMixin,
     ConfigFileParamsMixin,
-    HasStartAndEndpoints,
+    HasTimepoints,
     ROSInterpreter
     ):
     """ ROS interpreter for the ROSFicTrac node"""

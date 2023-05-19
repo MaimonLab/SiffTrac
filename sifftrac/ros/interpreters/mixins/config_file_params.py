@@ -27,7 +27,9 @@ class ConfigFileParamsMixin():
     """
     A mixin for ROS interpreters that validates the git commit
     corresponding to the data being logged and ensures it's
-    compatible with the interpreter.
+    compatible with the interpreter. To use, define a class
+    attribute config_params of type ConfigParams with a list
+    of packages and a dict of executables for each package.
     """
 
     config_params = ConfigParams()
@@ -35,7 +37,20 @@ class ConfigFileParamsMixin():
     def __init__(self, file_path : 'PathLike', *args, **kwargs):
         file_path = Path(file_path)
         try:
-            putative_config_file = next(file_path.parent.glob('*config.yaml'))
+            putative_config_file = next(
+                (
+                    path for path in file_path.parent.glob('*config.yaml')
+                    if not (path.name.startswith('._'))
+                ) , None
+            )
+            if putative_config_file is None:
+                # try the file_path just to be sure
+                putative_config_file = next(
+                    (
+                        path for path in file_path.glob('*config.yaml')
+                        if not (path.name.startswith('._'))
+                    )
+                )
             if hasattr(self.__class__, 'config_params'):
                 self.validate_config(putative_config_file)
             else:
@@ -110,5 +125,5 @@ class ConfigFileUpOneLevelParamsMixin(ConfigFileParamsMixin):
         """
         Validates the configuration file for the interpreter.
         """
-        config_file_path = Path(config_file_path).parent.parent
+        config_file_path = Path(config_file_path).parent
         super().validate_config(config_file_path)

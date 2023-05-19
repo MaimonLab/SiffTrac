@@ -77,7 +77,7 @@ class ROSInterpreter(ABC):
         return cls.LOG_TYPE(file_path)
     
     @classmethod
-    def isvalid(cls, file_path : 'PathLike')->bool:
+    def isvalid(cls, file_path : 'PathLike', report_failure : bool = True)->bool:
         """
         The isvalid method returns whether a file is of the correct type.
         """
@@ -85,11 +85,12 @@ class ROSInterpreter(ABC):
         try:
             return cls.LOG_TYPE.isvalid(file_path)
         except Exception as e:
-            logging.warning(f"""
-            Failed to validate file {file_path} as a {cls.LOG_TYPE.__name__} log
-            due to error: {e.with_traceback(e.__traceback__)}
-            """
-            )
+            if report_failure:
+                logging.warning(f"""
+                Failed to validate file {file_path} as a {cls.LOG_TYPE.__name__} log
+                due to error: {e.with_traceback(e.__traceback__)}
+                """
+                )
             return False
 
         

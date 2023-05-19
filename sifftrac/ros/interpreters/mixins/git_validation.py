@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Union,Optional
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+
+from pandas import to_datetime
 
 from ruamel.yaml import YAML
 
@@ -59,12 +60,23 @@ class GitValidatedMixin():
         # look for a file that ends in the right extension
         # and contains the file name with package_git_state
         putative_gits = file_path.parent.glob('*package_git_state*')
-        putative_gits = [p for p in putative_gits if p.suffix == '.yaml']
+        putative_gits = [
+            p for p in putative_gits
+            if (p.suffix == '.yaml') and not (p.name.startswith('._'))
+        ]
         if len(putative_gits) == 0:
-            logging.warning(f"""
-                No git state file found for {file_path}.\n
-                Cannot guarantee compatibility with the data.
-            """)
+            # try the current path just in case
+            putative_gits = file_path.glob('*package_git_state*')
+            putative_gits = [
+                p for p in putative_gits
+                if (p.suffix == '.yaml') and not (p.name.startswith('._'))
+            ]
+            if len(putative_gits) == 0:
+                logging.warning(f"""
+                    No git state file found for {file_path}.\n
+                    Cannot guarantee compatibility with the data.
+                """)
+                return
         if len(putative_gits) > 1:
             logging.warning(f"""
                 Multiple git state files found for {file_path}:\n
@@ -127,12 +139,12 @@ class GitValidatedMixin():
 
 def is_valid_git(config_from_yaml, git_config : GitConfig)->str:
     ret_string = ""
-    if datetime.strptime(
+    if to_datetime(
         config_from_yaml['commit_time'],
-        DATETIME_FORMAT
-        ) > datetime.strptime(
+        format = DATETIME_FORMAT
+        ) > to_datetime(
             git_config.commit_time,
-            DATETIME_FORMAT
+            format = DATETIME_FORMAT
         ):
         ret_string += f"""
             Git commit time is more recent than the last time
@@ -160,8 +172,8 @@ class GitValidatedUpOneLevelMixin(GitValidatedMixin):
         Validates the git information file for the interpreter.
         """
 
-        file_path = Path(file_path).parent.parent
-        super().validate_git(file_path)
+        file_path = Path(file_path).parent
+        GitValidatedMixin.validate_git(self, file_path)
 
         
 

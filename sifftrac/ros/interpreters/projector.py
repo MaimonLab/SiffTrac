@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML
+from numpy import pi as Pi
 
 from .ros_interpreter import ROSInterpreter, ROSLog
 from .mixins.git_validation import GitConfig, GitValidatedMixin
@@ -63,6 +64,14 @@ class ProjectorInterpreter(
         ),
     ]
 
+    config_params = ConfigParams(
+        packages = ['projector_driver', 'dlpc_projector_settings'],
+        executables={
+            'projector_driver' : ['projector_bar'],
+            'dlpc_projector_settings' : ['dlpc_projector_settings'],
+        },
+    )
+
     def __init__(
             self,
             file_path : 'PathLike',
@@ -78,3 +87,14 @@ class ProjectorInterpreter(
             return self.log.OLD_PROJECTOR_SPEC
         else:
             return True
+        
+    @property
+    def bar_front_angle(self)->float:
+        """
+        Specifies how to rotate the 'rotation_z' component to get
+        a bar in front.
+        """
+        if self.OLD_PROJECTOR_SPEC:
+            return Pi/2 - 174.9*Pi/180
+        else:
+            return Pi/2

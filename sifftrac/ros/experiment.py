@@ -4,7 +4,7 @@ which types of interpreters are needed, instantiates them,
 and lets them find their appropriate logs
 """
 from pathlib import Path
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type, Optional
 import inspect
 
 import numpy as np
@@ -15,7 +15,7 @@ from .interpreters import (
     VRPositionInterpreter, FicTracInterpreter, WarnerTemperatureInterpreter,
     ProjectorInterpreter, EventsInterpreter,
 )
-from .interpreters.mixins.timepoints_mixins import HasStartAndEndpoints
+from .interpreters.mixins.timepoints_mixins import HasTimepoints
 
 
 if TYPE_CHECKING:
@@ -32,6 +32,12 @@ INTERPRETERS : list[Type[ROSInterpreter]]= [
 ]
 
 class Experiment():
+    """
+    A class which parses an experiment folder and discerns
+    1) which types of interpreters are needed for the data therein
+    and 2) links variables up that should influence one another (e.g.
+    projector configuration files with the VR Position).
+    """
 
     def __init__(self, path : 'PathLike'):
         path = Path(path)
@@ -44,39 +50,47 @@ class Experiment():
                 if (not file.is_dir()) and interpreter_class.isvalid(file):
                     self.interpreters.append(interpreter_class(file))
     
+        if (self.vr_position != None) and (self.projector != None):
+            self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
+
     @property
-    def vr_position(self)->'VRPositionInterpreter':
+    def vr_position(self)->Optional['VRPositionInterpreter']:
         return next(
-            interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, VRPositionInterpreter)
+            (interpreter for interpreter in self.interpreters
+            if isinstance(interpreter, VRPositionInterpreter)),
+            None
         )
 
     @property
-    def fulltrac(self)->'FicTracInterpreter':
+    def fulltrac(self)->Optional['FicTracInterpreter']:
         return next(
-            interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, FicTracInterpreter)
+            (interpreter for interpreter in self.interpreters
+            if isinstance(interpreter, FicTracInterpreter)),
+            None
         )
     
     @property
-    def warner_temperature(self)->'WarnerTemperatureInterpreter':
+    def warner_temperature(self)->Optional['WarnerTemperatureInterpreter']:
         return next(
-            interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, WarnerTemperatureInterpreter)
+            (interpreter for interpreter in self.interpreters
+            if isinstance(interpreter, WarnerTemperatureInterpreter)),
+            None
         )
     
     @property
-    def events(self)->'EventsInterpreter':
+    def events(self)->Optional['EventsInterpreter']:
         return next(
-            interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, EventsInterpreter)
+            (interpreter for interpreter in self.interpreters
+            if isinstance(interpreter, EventsInterpreter)),
+            None
         )
     
     @property
-    def projector(self)->'ProjectorInterpreter':
+    def projector(self)->Optional['ProjectorInterpreter']:
         return next(
-            interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, ProjectorInterpreter)
+            (interpreter for interpreter in self.interpreters
+            if isinstance(interpreter, ProjectorInterpreter)),
+            None
         )
 
     @property
@@ -105,10 +119,10 @@ class Experiment():
                 if (
                     (not file.is_dir())
                     and interpreter_class.isvalid(file)
-                    and issubclass(interpreter_class, HasStartAndEndpoints)
+                    and issubclass(interpreter_class, HasTimepoints)
                 ):
                     start, end = interpreter_class.probe_start_and_end_timestamps(file)
                     earliest_start = max(earliest_start, start)
                     latest_end = min(latest_end, end)
 
-        return(earliest_start, latest_end)
+        return(earliest_start, int(latest_end))

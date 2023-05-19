@@ -1,5 +1,8 @@
 """
 Parses VR Position logs, with variations for each type of condition.
+
+VR Position uses 'natural' units, e.g. "Bar is up", "Up is 0 degrees",
+"Units are mm" etc.
 """
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -10,7 +13,7 @@ import numpy as np
 from ..ros_interpreter import ROSInterpreter, ROSLog
 from ..mixins.config_file_params import ConfigParams, ConfigFileUpOneLevelParamsMixin
 from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
-from ..mixins.timepoints_mixins import HasStartAndEndpoints
+from ..mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
     from ....utils.types import PathLike
@@ -48,11 +51,12 @@ class VRPositionLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
+        self.df['complex_pos'] = self.df['position_x'] + 1j*self.df['position_y']
 
 class VRPositionInterpreter(
     GitValidatedUpOneLevelMixin,
     ConfigFileUpOneLevelParamsMixin,
-    HasStartAndEndpoints,
+    HasTimepoints,
     ROSInterpreter
     ):
     """ ROS interpreter for the ROSFicTrac node"""
@@ -84,6 +88,8 @@ class VRPositionInterpreter(
             file_path : 'PathLike',
         ):
         # can be done appropriately
+        self.bar_in_front_angle : float = 0.0
+        self.ball_radius : float = 3.0
         super().__init__(file_path)
 
     @property
@@ -93,15 +99,34 @@ class VRPositionInterpreter(
 
     @property
     def x_position(self)->np.ndarray:
-        return self.df['position_x'].values
+        """ In mm """
+        return (
+            self.df['complex_pos'].values
+            * np.exp(1j*self.bar_in_front_angle)
+            * self.ball_radius
+        ).real
         
     @property
     def y_position(self)->np.ndarray:
-        return self.df['position_y'].values
+        """ In mm """
+        return (
+            self.df['complex_pos'].values
+            * np.exp(1j*self.bar_in_front_angle)
+            * self.ball_radius
+        ).imag
         
     @property
     def heading(self)->np.ndarray:
-        return self.df['rotation_z'].values
+        """ 0 is bar in front, for bar type experiments """
+        return np.angle(
+            np.exp(1j*self.df['rotation_z'].values)
+            * np.exp(-1j*self.bar_in_front_angle)
+        )
+    
+    @property
+    def unwrapped_heading(self)->np.ndarray:
+        """ 2*pi*n is bar in front, for bar type experiments """
+        return np.unwrap(self.heading)
         
     @property
     def timestamp(self)->np.ndarray:

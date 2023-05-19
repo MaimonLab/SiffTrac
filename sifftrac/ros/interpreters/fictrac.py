@@ -1,3 +1,5 @@
+""" Simply wraps the fulltrac output -- DOES NOT do unit conversions """
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -8,7 +10,7 @@ from ...utils import BallParams
 from .ros_interpreter import ROSInterpreter, ROSLog
 from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 from .mixins.git_validation import GitConfig, GitValidatedMixin
-from .mixins.timepoints_mixins import HasStartAndEndpoints
+from .mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
     from ...utils.types import PathLike
@@ -62,11 +64,12 @@ class FicTracLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
+        self.df['complex_pos'] = self.df['integrated_position_lab_0'] + 1j*self.df['integrated_position_lab_1']
 
 class FicTracInterpreter(
     GitValidatedMixin,
     ConfigFileParamsMixin,
-    HasStartAndEndpoints,
+    HasTimepoints,
     ROSInterpreter
     ):
     """ ROS interpreter for the ROSFicTrac node"""
@@ -90,9 +93,7 @@ class FicTracInterpreter(
     def __init__(
             self,
             file_path : 'PathLike',
-            ball_params : BallParams = BallParams(),
         ):
-        self.ball_params = ball_params
         # can be done appropriately
         super().__init__(file_path)
 
@@ -103,16 +104,16 @@ class FicTracInterpreter(
 
     @property
     def x_position(self)->np.ndarray:
+        """ In rad """
         return (
             self.df['integrated_position_lab_0'].values
-            * self.ball_params.radius
         )
         
     @property
     def y_position(self)->np.ndarray:
+        """ In rad """
         return (
             self.df['integrated_position_lab_1'].values
-            * self.ball_params.radius
         )
         
     @property
@@ -125,8 +126,8 @@ class FicTracInterpreter(
     
     @property
     def movement_speed(self)->np.ndarray:
+        """ In rad / frame """
         return (
             self.df['animal_movement_speed'].values
-            * self.ball_params.radius
         )
         

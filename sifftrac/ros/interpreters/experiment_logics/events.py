@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-import numpy as np
 
 from ..ros_interpreter import ROSInterpreter, ROSLog
 from ..mixins.config_file_params import ConfigParams, ConfigFileUpOneLevelParamsMixin
 from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
+from ..mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
     from ....utils.types import PathLike
@@ -49,11 +49,11 @@ class EventsLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
-        self.df.index = pd.to_datetime(self.df['timestamp'], unit='ns')
 
 class EventsInterpreter(
     GitValidatedUpOneLevelMixin,
     ConfigFileUpOneLevelParamsMixin,
+    HasTimepoints,
     ROSInterpreter
     ):
     """ ROS interpreter for the ROSFicTrac node"""
