@@ -112,17 +112,17 @@ class Experiment():
         """
         path = Path(path)
 
-        files_in_path = list(path.glob("*") if path.is_dir() else path.parent.glob("**/*"))
-        earliest_start, latest_end = 0, np.inf
+        files_in_path = list(path.rglob("*") if path.is_dir() else path.parent.rglob("*"))
+        earliest_start, latest_end = np.nan, np.nan
         for interpreter_class in INTERPRETERS:
             for file in files_in_path:
                 if (
                     (not file.is_dir())
-                    and interpreter_class.isvalid(file)
                     and issubclass(interpreter_class, HasTimepoints)
+                    and interpreter_class.isvalid(file)
                 ):
                     start, end = interpreter_class.probe_start_and_end_timestamps(file)
-                    earliest_start = max(earliest_start, start)
-                    latest_end = min(latest_end, end)
+                    earliest_start = max(start, earliest_start)
+                    latest_end = min(end, latest_end)
 
-        return(earliest_start, int(latest_end))
+        return(earliest_start, latest_end)

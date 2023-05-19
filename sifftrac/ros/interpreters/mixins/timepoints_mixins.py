@@ -62,9 +62,12 @@ class HasTimepoints():
     def probe_start_and_end_timestamps(cls, path : 'PathLike')->tuple[int, int]:
         """ Returns the first and last timestamp as nanoseconds """
         first_row = pd.read_csv(path, sep=',', nrows=1)
-        last_row = read_n_to_last_line(path, 1).split(',')
+        last_row = read_n_to_last_line(path, 2).split(',')
         last_row = pd.Series(last_row, index=first_row.columns)
-        return (first_row[cls.TIMESTAMP_COL].values[0], int(last_row[cls.TIMESTAMP_COL]))
+        return (
+            first_row[cls.TIMESTAMP_COL].values[0],
+            int(last_row[cls.TIMESTAMP_COL])
+        )
 
     def __str__(self):
         retstr = super().__str__()

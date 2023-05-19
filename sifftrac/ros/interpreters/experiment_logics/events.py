@@ -53,7 +53,7 @@ class EventsLog(ROSLog):
 class EventsInterpreter(
     GitValidatedUpOneLevelMixin,
     ConfigFileUpOneLevelParamsMixin,
-    HasTimepoints,
+    #HasTimepoints,
     ROSInterpreter
     ):
     """ ROS interpreter for the ROSFicTrac node"""
