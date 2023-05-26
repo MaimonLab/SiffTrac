@@ -10,6 +10,7 @@ from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 
 if TYPE_CHECKING:
     from ...utils.types import PathLike
+    from numpy import ndarray
 
 class ProjectorLog(ROSLog):
 
@@ -98,3 +99,9 @@ class ProjectorInterpreter(
             return Pi/2 - 174.9*Pi/180
         else:
             return Pi/2
+        
+    
+    @property
+    def projector_type_schematic(self)->'ndarray':
+        """ Returns a small image that symbolizes the type of projector display """
+        raise NotImplementedError("Not yet implemented")

@@ -25,6 +25,7 @@ class WarnerTemperatureLog(ROSLog):
         """ Checks extension and column titles """
         path = Path(path)
         valid = path.suffix == '.csv'
+        valid &= 'read' in path.name
         if not valid:
             return False
         cols = pd.read_csv(path, sep=',', nrows=1).columns

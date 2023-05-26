@@ -49,6 +49,10 @@ class EventsLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
+        self.df['datetime'] = (
+            pd.to_datetime(self.df['timestamp'].values, unit='ns')
+            .tz_localize('UTC').tz_convert('US/Eastern')
+        )
 
 class EventsInterpreter(
     GitValidatedUpOneLevelMixin,

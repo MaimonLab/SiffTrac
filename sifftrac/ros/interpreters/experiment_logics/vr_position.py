@@ -5,7 +5,7 @@ VR Position uses 'natural' units, e.g. "Bar is up", "Up is 0 degrees",
 "Units are mm" etc.
 """
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Any
 
 import pandas as pd
 import numpy as np
@@ -17,6 +17,8 @@ from ..mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
     from ....utils.types import PathLike
+    from pandas._typing import ArrayLike
+    from numpy.typing import NDArray
 
 VR_COLUMNS = [
     'timestamp',
@@ -90,12 +92,29 @@ class VRPositionInterpreter(
         # can be done appropriately
         self.bar_in_front_angle : float = 0.0
         self.ball_radius : float = 3.0
+        self.projector_config : Optional[list['ConfigParams']] = None
         super().__init__(file_path)
+
+    def set_projector_config(self, projector_config : list['ConfigParams']):
+        """
+        To specify the type of projector used -- discerned by
+        the ProjectorDriver config, not by the VRPosition per se
+        """
+        self.projector_config = projector_config
 
     @property
     def df(self)->pd.DataFrame:
         if hasattr(self.log, 'df'):
             return self.log.df
+
+    @property
+    def position(self)->'NDArray[np.complex128]':
+        """ Complex valued, in mm"""
+        return (
+            self.df['complex_pos'].values.astype(np.complex128)
+            * np.exp(1j*self.bar_in_front_angle)
+            * self.ball_radius
+        )
 
     @property
     def x_position(self)->np.ndarray:
@@ -119,7 +138,7 @@ class VRPositionInterpreter(
     def heading(self)->np.ndarray:
         """ 0 is bar in front, for bar type experiments """
         return np.angle(
-            np.exp(1j*self.df['rotation_z'].values)
+            np.exp(1j*self.df['rotation_z'].values.astype(float))
             * np.exp(-1j*self.bar_in_front_angle)
         )
     
@@ -129,6 +148,6 @@ class VRPositionInterpreter(
         return np.unwrap(self.heading)
         
     @property
-    def timestamp(self)->np.ndarray:
+    def timestamp(self)->'ArrayLike':
         return self.df['timestamp'].values
-   
+    

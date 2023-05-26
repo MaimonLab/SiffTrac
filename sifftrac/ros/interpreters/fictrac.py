@@ -1,7 +1,7 @@
 """ Simply wraps the fulltrac output -- DOES NOT do unit conversions """
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import numpy as np
@@ -14,6 +14,8 @@ from .mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
     from ...utils.types import PathLike
+    from pandas._typing import ArrayLike
+    from numpy.typing import NDArray
 
 FICTRAC_COLUMNS = [
     'timestamp',
@@ -103,31 +105,37 @@ class FicTracInterpreter(
             return self.log.df
 
     @property
-    def x_position(self)->np.ndarray:
+    def position(self)->'ArrayLike':
+        """ Complex position """
+        return self.df['complex_pos'].values
+
+    @property
+    def x_position(self)->'ArrayLike':
         """ In rad """
         return (
             self.df['integrated_position_lab_0'].values
         )
         
     @property
-    def y_position(self)->np.ndarray:
+    def y_position(self)->'ArrayLike':
         """ In rad """
         return (
             self.df['integrated_position_lab_1'].values
         )
         
     @property
-    def heading(self)->np.ndarray:
+    def heading(self)->'ArrayLike':
         return self.df['integrated_heading_lab'].values
         
     @property
-    def timestamp(self)->np.ndarray:
+    def timestamp(self)->'ArrayLike':
         return self.df['timestamp'].values
     
     @property
-    def movement_speed(self)->np.ndarray:
-        """ In rad / frame """
+    def movement_speed(self)->'NDArray':
+        """ In rad / sec """
         return (
-            self.df['animal_movement_speed'].values
+            self.df['animal_movement_speed'].values.astype(float) / 
+            self.df['datetime'].diff().dt.total_seconds().values.astype(float)
         )
         

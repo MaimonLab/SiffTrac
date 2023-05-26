@@ -43,18 +43,23 @@ class Experiment():
         path = Path(path)
         # probe whether any of the interpreters are valid
         # for any files in this path
-        files_in_path = list(path.glob("*") if path.is_dir() else path.parent.glob("**/*"))
+        files_in_path = list(path.rglob("*") if path.is_dir() else path.parent.rglob("*"))
         self.interpreters = []
         for interpreter_class in INTERPRETERS:
             for file in files_in_path:
-                if (not file.is_dir()) and interpreter_class.isvalid(file):
+                if (
+                    (not file.is_dir())
+                    and interpreter_class.isvalid(file)
+                    and (not '._' in file.name) # this annoying fucking macos thing
+                ):
                     self.interpreters.append(interpreter_class(file))
     
         if (self.vr_position != None) and (self.projector != None):
             self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
+            self.vr_position.set_projector_config(self.projector.experiment_config)
 
     @property
-    def vr_position(self)->Optional['VRPositionInterpreter']:
+    def vr_position(self)->Optional[VRPositionInterpreter]:
         return next(
             (interpreter for interpreter in self.interpreters
             if isinstance(interpreter, VRPositionInterpreter)),
@@ -62,7 +67,7 @@ class Experiment():
         )
 
     @property
-    def fulltrac(self)->Optional['FicTracInterpreter']:
+    def fulltrac(self)->Optional[FicTracInterpreter]:
         return next(
             (interpreter for interpreter in self.interpreters
             if isinstance(interpreter, FicTracInterpreter)),
@@ -70,7 +75,7 @@ class Experiment():
         )
     
     @property
-    def warner_temperature(self)->Optional['WarnerTemperatureInterpreter']:
+    def warner_temperature(self)->Optional[WarnerTemperatureInterpreter]:
         return next(
             (interpreter for interpreter in self.interpreters
             if isinstance(interpreter, WarnerTemperatureInterpreter)),
@@ -78,7 +83,7 @@ class Experiment():
         )
     
     @property
-    def events(self)->Optional['EventsInterpreter']:
+    def events(self)->Optional[EventsInterpreter]:
         return next(
             (interpreter for interpreter in self.interpreters
             if isinstance(interpreter, EventsInterpreter)),
@@ -86,7 +91,7 @@ class Experiment():
         )
     
     @property
-    def projector(self)->Optional['ProjectorInterpreter']:
+    def projector(self)->Optional[ProjectorInterpreter]:
         return next(
             (interpreter for interpreter in self.interpreters
             if isinstance(interpreter, ProjectorInterpreter)),
@@ -112,17 +117,22 @@ class Experiment():
         """
         path = Path(path)
 
-        files_in_path = list(path.rglob("*") if path.is_dir() else path.parent.rglob("*"))
+        files_in_path = list(path.glob("*") if path.is_dir() else path.parent.glob("*"))
         earliest_start, latest_end = np.nan, np.nan
         for interpreter_class in INTERPRETERS:
             for file in files_in_path:
-                if (
-                    (not file.is_dir())
-                    and issubclass(interpreter_class, HasTimepoints)
-                    and interpreter_class.isvalid(file)
-                ):
-                    start, end = interpreter_class.probe_start_and_end_timestamps(file)
-                    earliest_start = max(start, earliest_start)
-                    latest_end = min(end, latest_end)
+                try:
+                    if (
+                        (not file.is_dir())
+                        and issubclass(interpreter_class, HasTimepoints)
+                        and interpreter_class.isvalid(file)
+                        and ('._' not in file.name)
+                    ):
+                        start, end = interpreter_class.probe_start_and_end_timestamps(file)
+                        earliest_start = min(start, earliest_start)
+                        latest_end = max(end, latest_end)
+                except Exception as e:
+                    print(f"Error probing {file} for timestamps: {e}")
+                    continue
 
         return(earliest_start, latest_end)

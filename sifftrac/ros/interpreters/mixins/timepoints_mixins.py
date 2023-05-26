@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import os
 
 import pandas as pd
@@ -7,7 +7,8 @@ if TYPE_CHECKING:
     from ....utils.types import PathLike
     from ..ros_interpreter import ROSLog
 
-# Copied from Jazz
+# Copied from Jazz, not optimal because of the way it can't recognize
+# that strings containing new lines are not genuine new lines
 
 def read_n_to_last_line(filename : 'PathLike', n : int = 1):
     """Returns the nth before last line of a file (n=1 gives last line)"""
@@ -31,6 +32,10 @@ class HasTimepoints():
     as well that is in UTC and localized to US/Eastern time
     """
     TIMESTAMP_COL : str = 'timestamp'
+    df : pd.DataFrame
+
+    def __init__(self, *args, **kwargs):
+        return super().__init__(*args, **kwargs)
 
     @property
     def start_timestamp(self)->int:
@@ -44,6 +49,17 @@ class HasTimepoints():
     def start_and_end_timestamps(self)->tuple[int,int]:
         return (self.start_timestamp, self.end_timestamp)
     
+    @property
+    def timestamps(self)->pd.Series:
+        return self.df[self.__class__.TIMESTAMP_COL]
+    
+    @property
+    def datetimes(self)->Optional[pd.Series]:
+        if not hasattr(self, 'log'):
+            return
+        if hasattr(self.log, 'df'):
+            return self.log.df['datetime']
+
     @classmethod
     def open(cls, path : 'PathLike')->'ROSLog':
         open_call = getattr(super(), 'open')

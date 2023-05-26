@@ -4,7 +4,7 @@ for appropriate experimental parameters
 """
 
 from pathlib import Path
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING, Union
 import logging
 from dataclasses import dataclass, field
 
@@ -18,9 +18,9 @@ class ConfigParams():
     """
     A class for storing configuration metadata for an executable.
     """
-    packages : list[str] = field(default_factory=list)
-    executables : dict[str,list[str]] = field(default_factory=dict) # key: package, value: list of executables
-    parameters : dict[str, list[str]] = field(default_factory=dict) # names of the parameters that are used for each executable
+    packages : Union[str,List[str]] = field(default_factory=list)
+    executables : Union[str,Dict[str,List[str]]] = field(default_factory=dict) # key: package, value: list of executables
+    parameters : Dict[str, List[str]] = field(default_factory=dict) # names of the parameters that are used for each executable
     param_values : Dict[str, Any] = field(default_factory=dict) # key: parameter name, value: parameter value
 
 class ConfigFileParamsMixin():
@@ -33,6 +33,7 @@ class ConfigFileParamsMixin():
     """
 
     config_params = ConfigParams()
+    experiment_config : List['ConfigParams']
 
     def __init__(self, file_path : 'PathLike', *args, **kwargs):
         file_path = Path(file_path)
