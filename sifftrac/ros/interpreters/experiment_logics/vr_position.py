@@ -53,7 +53,7 @@ class VRPositionLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
-        self.df['complex_pos'] = self.df['position_x'] + 1j*self.df['position_y']
+        self.df['complex_pos'] = 1j*(self.df['position_x'] + 1j*self.df['position_y'])
 
 class VRPositionInterpreter(
     GitValidatedUpOneLevelMixin,
