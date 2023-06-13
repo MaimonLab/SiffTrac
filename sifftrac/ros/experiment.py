@@ -13,7 +13,7 @@ from . import interpreters
 from .interpreters.ros_interpreter import ROSInterpreter
 from .interpreters import (
     VRPositionInterpreter, FicTracInterpreter, WarnerTemperatureInterpreter,
-    ProjectorInterpreter, EventsInterpreter,
+    ProjectorInterpreter, EventsInterpreter, MetadataInterpreter,
 )
 from .interpreters.mixins.timepoints_mixins import HasTimepoints
 
@@ -57,6 +57,24 @@ class Experiment():
         if (self.vr_position != None) and (self.projector != None):
             self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
             self.vr_position.set_projector_config(self.projector.experiment_config)
+
+    @property
+    def genotype(self)->str:
+        return next(
+            (
+                interpreter for interpreter in self.interpreters
+                if isinstance(interpreter, MetadataInterpreter)
+            )
+        ).metadata['genotype']
+    
+    @property
+    def notes(self)->str:
+        return next(
+            (
+                interpreter for interpreter in self.interpreters
+                if isinstance(interpreter, MetadataInterpreter)
+            )
+        ).metadata['notes']
 
     @property
     def vr_position(self)->Optional[VRPositionInterpreter]:

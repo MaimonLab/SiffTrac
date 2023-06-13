@@ -103,6 +103,7 @@ class FicTracInterpreter(
     def df(self)->pd.DataFrame:
         if hasattr(self.log, 'df'):
             return self.log.df
+        raise AttributeError("No log instantiated")
 
     @property
     def position(self)->'ArrayLike':

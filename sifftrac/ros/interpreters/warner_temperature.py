@@ -42,6 +42,10 @@ class WarnerTemperatureLog(ROSLog):
         
         self.df = pd.read_csv(path, sep=',')
 
+        if set_temp_path := next(path.parent.glob('*set_temperature*'),None):
+            self.set_temp_df = pd.read_csv(set_temp_path, sep=',')
+
+
 class WarnerTemperatureInterpreter(
     GitValidatedMixin,
     ConfigFileParamsMixin,
@@ -76,7 +80,19 @@ class WarnerTemperatureInterpreter(
     def df(self)->pd.DataFrame:
         if hasattr(self.log, 'df'):
             return self.log.df
+        raise AttributeError('No temperature log found')
+
+    @property
+    def set_temperatures_df(self)->pd.DataFrame:
+        if hasattr(self.log, 'set_temp_df'):
+            return self.log.set_temp_df
+        raise AttributeError('No set temperature log found')
 
     @property
     def temperature(self)->pd.Series:
         return self.df['Temperature (C)_0_voltage']
+    
+    @property
+    def set_values(self)->pd.Series:
+        if hasattr(self, 'set_temperatures_df'):
+            return self.set_temperatures_df['Temperature (C)_0_voltage']
