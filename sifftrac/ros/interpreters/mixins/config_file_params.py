@@ -37,10 +37,12 @@ class ConfigFileParamsMixin():
 
     def __init__(self, file_path : 'PathLike', *args, **kwargs):
         file_path = Path(file_path)
+
+        search_path = self.to_search_path(file_path)
         try:
             putative_config_file = next(
                 (
-                    path for path in file_path.parent.glob('*config.yaml')
+                    path for path in search_path.parent.glob('*config.yaml')
                     if not (path.name.startswith('._'))
                 ) , None
             )
@@ -48,7 +50,7 @@ class ConfigFileParamsMixin():
                 # try the file_path just to be sure
                 putative_config_file = next(
                     (
-                        path for path in file_path.glob('*config.yaml')
+                        path for path in search_path.glob('*config.yaml')
                         if not (path.name.startswith('._'))
                     )
                 )
@@ -67,10 +69,14 @@ class ConfigFileParamsMixin():
                 f"""Failed to read config file found for {self.__class__.__name__}.
                 Unable to validate configuration file and store parameters.
                 Exception: \n{e}
-                """
+                """, exc_info = (not isinstance(e, (FileNotFoundError, StopIteration)))
             )
             self.experiment_config = None
         super().__init__(file_path, *args, **kwargs)
+
+    def to_search_path(self, file_path : 'PathLike')->Path:
+        """ Where to search """
+        return Path(file_path)
 
     def validate_config(self, config_file_path : 'PathLike'):
         """
@@ -121,10 +127,6 @@ class ConfigFileUpOneLevelParamsMixin(ConfigFileParamsMixin):
     """
     For config files that are one level up from the data file.
     """
-
-    def validate_config(self, config_file_path : 'PathLike'):
-        """
-        Validates the configuration file for the interpreter.
-        """
-        config_file_path = Path(config_file_path).parent
-        super().validate_config(config_file_path)
+    def to_search_path(self, file_path : 'PathLike')->Path:
+        """ Where to search """
+        return Path(file_path).parent

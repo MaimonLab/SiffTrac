@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Type, Optional
 import inspect
 
 import numpy as np
+import ruamel.yaml as yaml
 
 from . import interpreters
 from .interpreters.ros_interpreter import ROSInterpreter
@@ -45,6 +46,8 @@ class Experiment():
         # for any files in this path
         files_in_path = list(path.rglob("*") if path.is_dir() else path.parent.rglob("*"))
         self.interpreters = []
+        for file in files_in_path:
+            pass
         for interpreter_class in INTERPRETERS:
             for file in files_in_path:
                 if (
@@ -57,6 +60,10 @@ class Experiment():
         if (self.vr_position != None) and (self.projector != None):
             self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
             self.vr_position.set_projector_config(self.projector.experiment_config)
+
+    #@property
+    #def bringup_config_(self)->dict:
+
 
     @property
     def genotype(self)->str:
@@ -153,4 +160,4 @@ class Experiment():
                     print(f"Error probing {file} for timestamps: {e}")
                     continue
 
-        return(earliest_start, latest_end)
+        return (earliest_start, latest_end)
