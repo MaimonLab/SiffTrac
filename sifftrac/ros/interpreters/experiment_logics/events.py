@@ -26,6 +26,11 @@ SCANIMAGE_EVENTS = [
     'StopAcqScanImage',
 ]
 
+BAR_EVENTS = [
+    'BarSet',
+    'JumpOffsetDegrees',
+]
+
 
 class EventsLog(ROSLog):
 
@@ -98,7 +103,7 @@ class EventsInterpreter(
 
     @property
     def bar_events(self)->pd.DataFrame:
-        self.df.loc[self.df['Event type'] == 'BarSet']
+        self.df.loc[self.df['Event type'].isin(BAR_EVENTS)]
 
     @property
     def temperature_events(self)->pd.DataFrame:
