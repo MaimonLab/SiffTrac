@@ -16,9 +16,7 @@ from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
 from ..mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
-    from ....utils.types import PathLike
-    from pandas._typing import ArrayLike
-    from numpy.typing import NDArray
+    from ....utils.types import PathLike, ComplexArray, FloatArray, IntArray, BoolArray
 
 VR_COLUMNS = [
     'timestamp',
@@ -108,7 +106,7 @@ class VRPositionInterpreter(
             return self.log.df
 
     @property
-    def position(self)->'NDArray[np.complex128]':
+    def position(self)->ComplexArray:
         """ Complex valued, in mm"""
         return (
             self.df['complex_pos'].values.astype(np.complex128)
@@ -117,7 +115,7 @@ class VRPositionInterpreter(
         )
 
     @property
-    def x_position(self)->np.ndarray:
+    def x_position(self)->FloatArray:
         """ In mm """
         return (
             self.df['complex_pos'].values
@@ -126,7 +124,7 @@ class VRPositionInterpreter(
         ).real
         
     @property
-    def y_position(self)->np.ndarray:
+    def y_position(self)->FloatArray:
         """ In mm """
         return (
             self.df['complex_pos'].values
@@ -135,7 +133,7 @@ class VRPositionInterpreter(
         ).imag
         
     @property
-    def heading(self)->np.ndarray:
+    def heading(self)->FloatArray:
         """ 0 is bar in front, for bar type experiments """
         return np.angle(
             np.exp(1j*self.df['rotation_z'].values.astype(float))
@@ -143,11 +141,11 @@ class VRPositionInterpreter(
         )
     
     @property
-    def unwrapped_heading(self)->np.ndarray:
+    def unwrapped_heading(self)->FloatArray:
         """ 2*pi*n is bar in front, for bar type experiments """
         return np.unwrap(self.heading)
         
     @property
-    def timestamp(self)->'ArrayLike':
+    def timestamp(self)->np.ndarray:
         return self.df['timestamp'].values
     

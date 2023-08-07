@@ -133,12 +133,21 @@ class Experiment():
         """ Nanoseconds """
         return 0
     
-    @classmethod
-    def probe_start_and_end_timestamps(cls, path : 'PathLike')->tuple[int, int]:
+    @staticmethod
+    def probe_start_and_end_timestamps(path : 'PathLike', suppress_warnings : bool = True)->tuple[int, int]:
         """
         Checks a path for a set of data files corresponding to an experiment
         and estimates its start and end timestamps in nanoseconds without
         opening and initializing all the files.
+
+        path : PathLike
+            The path to the experiment folder or a file within it.
+
+        suppress_warnings : bool
+            Whether to suppress warnings about files that are not interpretable.
+            You basically always want this to be true -- for example, MacOS
+            creates a bunch of hidden files that are not interpretable and spam
+            your terminal with warnings if you don't suppress them.
         """
         path = Path(path)
 
@@ -157,7 +166,8 @@ class Experiment():
                         earliest_start = min(start, earliest_start)
                         latest_end = max(end, latest_end)
                 except Exception as e:
-                    print(f"Error probing {file} for timestamps: {e}")
+                    if not suppress_warnings:
+                        print(f"Error probing {file} for timestamps: {e}")
                     continue
 
         return (earliest_start, latest_end)

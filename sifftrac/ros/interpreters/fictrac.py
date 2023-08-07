@@ -13,9 +13,8 @@ from .mixins.git_validation import GitConfig, GitValidatedMixin
 from .mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
-    from ...utils.types import PathLike
+    from ...utils.types import PathLike, ComplexArray, FloatArray, IntArray
     from pandas._typing import ArrayLike
-    from numpy.typing import NDArray
 
 FICTRAC_COLUMNS = [
     'timestamp',
@@ -106,34 +105,34 @@ class FicTracInterpreter(
         raise AttributeError("No log instantiated")
 
     @property
-    def position(self)->'ArrayLike':
+    def position(self)->ComplexArray:
         """ Complex position """
         return self.df['complex_pos'].values
 
     @property
-    def x_position(self)->'ArrayLike':
+    def x_position(self)->FloatArray:
         """ In rad """
         return (
             self.df['integrated_position_lab_0'].values
         )
         
     @property
-    def y_position(self)->'ArrayLike':
+    def y_position(self)->FloatArray:
         """ In rad """
         return (
             self.df['integrated_position_lab_1'].values
         )
         
     @property
-    def heading(self)->'ArrayLike':
+    def heading(self)->FloatArray:
         return self.df['integrated_heading_lab'].values
         
     @property
-    def timestamp(self)->'ArrayLike':
+    def timestamp(self)->IntArray:
         return self.df['timestamp'].values
     
     @property
-    def movement_speed(self)->'NDArray':
+    def movement_speed(self)->FloatArray:
         """ In rad / sec """
         return (
             self.df['animal_movement_speed'].values.astype(float) / 

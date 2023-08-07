@@ -54,9 +54,9 @@ class HasTimepoints():
         return self.df[self.__class__.TIMESTAMP_COL]
     
     @property
-    def datetimes(self)->Optional[pd.Series]:
+    def datetimes(self)->pd.Series:
         if not hasattr(self, 'log'):
-            return
+            raise AttributeError("No log containing datetimes")
         if hasattr(self.log, 'df'):
             return self.log.df['datetime']
 
