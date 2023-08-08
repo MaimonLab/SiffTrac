@@ -15,8 +15,7 @@ from ..mixins.config_file_params import ConfigParams, ConfigFileUpOneLevelParams
 from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
 from ..mixins.timepoints_mixins import HasTimepoints
 
-if TYPE_CHECKING:
-    from ....utils.types import PathLike, ComplexArray, FloatArray, IntArray, BoolArray
+from ....utils.types import PathLike, ComplexArray, FloatArray, IntArray, BoolArray
 
 VR_COLUMNS = [
     'timestamp',

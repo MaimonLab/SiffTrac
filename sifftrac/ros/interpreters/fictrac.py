@@ -12,10 +12,8 @@ from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 from .mixins.git_validation import GitConfig, GitValidatedMixin
 from .mixins.timepoints_mixins import HasTimepoints
 
-if TYPE_CHECKING:
-    from ...utils.types import PathLike, ComplexArray, FloatArray, IntArray
-    from pandas._typing import ArrayLike
-
+from ...utils.types import PathLike, ComplexArray, FloatArray, IntArray
+    
 FICTRAC_COLUMNS = [
     'timestamp',
     'frame_id',
