@@ -132,7 +132,7 @@ class VRPositionInterpreter(
         ).imag
         
     @property
-    def heading(self)->FloatArray:
+    def vr_heading(self)->FloatArray:
         """ 0 is bar in front, for bar type experiments """
         return np.angle(
             np.exp(1j*self.df['rotation_z'].values.astype(float))
@@ -142,7 +142,7 @@ class VRPositionInterpreter(
     @property
     def unwrapped_heading(self)->FloatArray:
         """ 2*pi*n is bar in front, for bar type experiments """
-        return np.unwrap(self.heading)
+        return np.unwrap(self.vr_heading)
         
     @property
     def timestamp(self)->np.ndarray:

@@ -103,12 +103,15 @@ class EventsInterpreter(
 
     @property
     def bar_events(self)->pd.DataFrame:
-        self.df.loc[self.df['Event type'].isin(BAR_EVENTS)]
+        """
+        Get rows of the df where the 'Event type' column is in BAR_EVENTS
+        """
+        return self.df.loc[self.df['Event type'].isin(BAR_EVENTS)]
 
     @property
     def temperature_events(self)->pd.DataFrame:
-        self.df.loc[self.df['Event type'] == 'WarnerTemperatureSet']
+        return self.df.loc[self.df['Event type'] == 'WarnerTemperatureSet']
 
     @property
     def scanimage_events(self)->pd.DataFrame:
-        self.df.loc[self.df['Event type'].isin(SCANIMAGE_EVENTS)]
+        return self.df.loc[self.df['Event type'].isin(SCANIMAGE_EVENTS)]

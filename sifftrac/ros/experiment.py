@@ -42,6 +42,7 @@ class Experiment():
 
     def __init__(self, path : 'PathLike'):
         path = Path(path)
+        self.main_path = path
         # probe whether any of the interpreters are valid
         # for any files in this path
         files_in_path = list(path.rglob("*") if path.is_dir() else path.parent.rglob("*"))
@@ -63,66 +64,52 @@ class Experiment():
 
     #@property
     #def bringup_config_(self)->dict:
-
+    def get_interpreter_type(self, cls : type)->ROSInterpreter:
+        """ Returns interpreter of type cls, if any exists """
+        return next(
+            (
+                interpreter for interpreter in self.interpreters
+                if isinstance(interpreter, cls)
+            ),
+            None,
+        )
 
     @property
     def genotype(self)->str:
-        return next(
-            (
-                interpreter for interpreter in self.interpreters
-                if isinstance(interpreter, MetadataInterpreter)
-            )
-        ).metadata['genotype']
+        return self.get_interpreter_type(MetadataInterpreter).metadata['genotype']
     
     @property
     def notes(self)->str:
-        return next(
-            (
-                interpreter for interpreter in self.interpreters
-                if isinstance(interpreter, MetadataInterpreter)
-            )
-        ).metadata['notes']
+        return self.get_interpreter_type(MetadataInterpreter).metadata['notes']
 
     @property
     def vr_position(self)->Optional[VRPositionInterpreter]:
-        return next(
-            (interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, VRPositionInterpreter)),
-            None
-        )
-
+        return self.get_interpreter_type(VRPositionInterpreter)
+    
     @property
     def fulltrac(self)->Optional[FicTracInterpreter]:
-        return next(
-            (interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, FicTracInterpreter)),
-            None
-        )
+        """ Returns the first FicTracInterpreter class it finds,
+        if any """
+        return self.get_interpreter_type(FicTracInterpreter)
     
     @property
     def warner_temperature(self)->Optional[WarnerTemperatureInterpreter]:
-        return next(
-            (interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, WarnerTemperatureInterpreter)),
-            None
-        )
+        """ Returns the first WarnerTemperatureInterpreter class it finds,
+        if any """
+        return self.get_interpreter_type(WarnerTemperatureInterpreter)
     
     @property
     def events(self)->Optional[EventsInterpreter]:
-        return next(
-            (interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, EventsInterpreter)),
-            None
-        )
+        """ Returns the first EventsInterpreter class it finds,
+        if any """
+        return self.get_interpreter_type(EventsInterpreter)
     
     @property
     def projector(self)->Optional[ProjectorInterpreter]:
-        return next(
-            (interpreter for interpreter in self.interpreters
-            if isinstance(interpreter, ProjectorInterpreter)),
-            None
-        )
-
+        """ Returns the first ProjectorInterpreter class it finds,
+        if any """
+        return self.get_interpreter_type(ProjectorInterpreter)
+    
     @property
     def start_timestamp(self)->int:
         """ Nanoseconds """
