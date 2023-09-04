@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union,Optional
+from typing import Union,Optional, List
 import logging
 from dataclasses import dataclass
 
@@ -20,7 +20,7 @@ class GitConfig():
     commit_time : Optional[str] = None
     commit_hash : Optional[str] = None
     package : Optional[str] = None
-    executable : Optional[Union[str,list[str]]] = None
+    executable : Optional[Union[str,List[str]]] = None
 
 class GitValidatedMixin():
     """
@@ -29,7 +29,7 @@ class GitValidatedMixin():
     compatible with the interpreter.
     """
 
-    git_config : Union[GitConfig, list[GitConfig]] = []
+    git_config : Union[GitConfig, List[GitConfig]] = []
 
     def __init__(self, file_path : Union[str, Path], *args, **kwargs):
         if not hasattr(self.__class__, 'git_config'):

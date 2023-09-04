@@ -8,17 +8,15 @@ package:
 source:
   path: ../
   git_rev: {{ GIT_DESCRIBE_TAG }}
-  git_url: ../
   #git_url: https://github.com/maimonlab/siffpy.git
 
 build:
-  noarch: python
+  #noarch: python
   number: {{ GIT_DESCRIBE_NUMBER }}
   script: "{{ PYTHON }} -m pip install ."
 
 requirements:
   build:
-    - git
     - python
     - pip
     - wheel
@@ -34,6 +32,7 @@ requirements:
     - pandas
     - scipy
     - h5py
+    - ruamel.yaml
 
 test:
 #   requires:
