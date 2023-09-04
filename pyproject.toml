@@ -9,12 +9,13 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 write_to = "sifftrac/_version.py"
 
-[tool.setuptools.packages.find]
-exclude = ["test_notebooks*"]
+[tool.setuptools]
+packages = ["sifftrac"]
 
 [project]
 name = "sifftrac"
-dynamic = ["version"]
+version = "0.0.1"
+#dynamic = ["version"]
 readme = "README.md"
 description = "A package for reading and analyzing FicTrac and other ROS2 output data"
 license = {text="GPL-3.0-or-later"}
@@ -28,4 +29,5 @@ dependencies = [
     "scipy",
     "h5py",
     "pandas",
+    "ruamel",
 ]
