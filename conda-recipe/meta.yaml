@@ -21,8 +21,6 @@ requirements:
     - git
     - python
     - pip
-    - setuptools>=45
-    - setuptools_scm[toml]>=6.2
     - wheel
   host:
     - python
