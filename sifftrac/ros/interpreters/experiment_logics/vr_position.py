@@ -5,7 +5,7 @@ VR Position uses 'natural' units, e.g. "Bar is up", "Up is 0 degrees",
 "Units are mm" etc.
 """
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Any
+from typing import TYPE_CHECKING, Optional, Any, List
 
 import pandas as pd
 import numpy as np
@@ -89,10 +89,10 @@ class VRPositionInterpreter(
         # can be done appropriately
         self.bar_in_front_angle : float = 0.0
         self.ball_radius : float = 3.0
-        self.projector_config : Optional[list['ConfigParams']] = None
+        self.projector_config : Optional[List['ConfigParams']] = None
         super().__init__(file_path)
 
-    def set_projector_config(self, projector_config : list['ConfigParams']):
+    def set_projector_config(self, projector_config : List['ConfigParams']):
         """
         To specify the type of projector used -- discerned by
         the ProjectorDriver config, not by the VRPosition per se
@@ -131,6 +131,16 @@ class VRPositionInterpreter(
             * self.ball_radius
         ).imag
         
+    @property
+    def vr_translation_speed(self)->FloatArray:
+        """ In mm / sec """
+        return (
+            np.abs(
+                np.diff(self.position)
+            )/
+            np.diff(self.timestamp)
+        ) * self.ball_radius
+    
     @property
     def vr_heading(self)->FloatArray:
         """ 0 is bar in front, for bar type experiments """

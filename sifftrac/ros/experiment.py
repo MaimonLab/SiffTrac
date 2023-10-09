@@ -4,7 +4,7 @@ which types of interpreters are needed, instantiates them,
 and lets them find their appropriate logs
 """
 from pathlib import Path
-from typing import TYPE_CHECKING, Type, Optional
+from typing import TYPE_CHECKING, Type, Optional, List, Tuple
 import inspect
 
 import numpy as np
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from ..utils.types import PathLike
 
 
-INTERPRETERS : list[Type[ROSInterpreter]]= [
+INTERPRETERS : List[Type[ROSInterpreter]]= [
     cls
     for name, cls in
     inspect.getmembers(
@@ -121,7 +121,7 @@ class Experiment():
         return 0
     
     @staticmethod
-    def probe_start_and_end_timestamps(path : 'PathLike', suppress_warnings : bool = True)->tuple[int, int]:
+    def probe_start_and_end_timestamps(path : 'PathLike', suppress_warnings : bool = True)->Tuple[int, int]:
         """
         Checks a path for a set of data files corresponding to an experiment
         and estimates its start and end timestamps in nanoseconds without

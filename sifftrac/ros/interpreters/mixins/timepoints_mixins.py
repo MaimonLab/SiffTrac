@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Tuple
 import os
 
 import pandas as pd
@@ -46,7 +46,7 @@ class HasTimepoints():
         return self.df[self.__class__.TIMESTAMP_COL].values[-1]
     
     @property
-    def start_and_end_timestamps(self)->tuple[int,int]:
+    def start_and_end_timestamps(self)->Tuple[int,int]:
         return (self.start_timestamp, self.end_timestamp)
     
     @property
@@ -75,7 +75,7 @@ class HasTimepoints():
         return log
 
     @classmethod
-    def probe_start_and_end_timestamps(cls, path : 'PathLike')->tuple[int, int]:
+    def probe_start_and_end_timestamps(cls, path : 'PathLike')->Tuple[int, int]:
         """ Returns the first and last timestamp as nanoseconds """
         first_row = pd.read_csv(path, sep=',', nrows=1)
         last_row = read_n_to_last_line(path, 2).split(',')

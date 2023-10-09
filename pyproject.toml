@@ -14,8 +14,8 @@ packages = ["sifftrac"]
 
 [project]
 name = "sifftrac"
-#version = "0.0.1"
-dynamic = ["version"]
+version = "0.0.1"
+#dynamic = ["version"]
 readme = "README.md"
 description = "A package for reading and analyzing FicTrac and other ROS2 output data"
 license = {text="GPL-3.0-or-later"}
