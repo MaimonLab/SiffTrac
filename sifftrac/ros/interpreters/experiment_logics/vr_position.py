@@ -50,7 +50,7 @@ class VRPositionLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
-        self.df['complex_pos'] = 1j*(self.df['position_x'] + 1j*self.df['position_y'])
+        self.df['complex_pos'] = 1j*(self.df['position_x'] - 1j*self.df['position_y'])
 
 class VRPositionInterpreter(
     GitValidatedUpOneLevelMixin,
@@ -135,11 +135,9 @@ class VRPositionInterpreter(
     def vr_translation_speed(self)->FloatArray:
         """ In mm / sec """
         return (
-            np.abs(
-                np.diff(self.position)
-            )/
-            np.diff(self.timestamp)
-        ) * self.ball_radius
+            np.abs(np.diff(self.position, prepend=np.nan)) 
+            / self.df['datetime'].diff().dt.total_seconds().values.astype(float)
+        )
     
     @property
     def vr_heading(self)->FloatArray:

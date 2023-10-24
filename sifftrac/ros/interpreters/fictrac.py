@@ -141,7 +141,7 @@ class FicTracInterpreter(
     def translational_speed(self)->FloatArray:
         """ In rad / sec """
         return (
-            np.diff(np.abs(self.position))/
+            np.abs(np.diff(self.position))/
             self.df['datetime'].diff().dt.total_seconds().values.astype(float)
         )
         
