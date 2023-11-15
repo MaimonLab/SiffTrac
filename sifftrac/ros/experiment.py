@@ -1,20 +1,21 @@
 """
 A class which parses a configuration file, discerns
 which types of interpreters are needed, instantiates them,
-and lets them find their appropriate logs
+and lets them find their appropriate logs. Automatically works
+as long as the interpreters are imported in the `interpreters` module.
 """
 from pathlib import Path
-from typing import TYPE_CHECKING, Type, Optional, List, Tuple
+from typing import TYPE_CHECKING, Type, Optional, List, Tuple, TypeVar
 import inspect
 
 import numpy as np
-import ruamel.yaml as yaml
 
 from . import interpreters
 from .interpreters.ros_interpreter import ROSInterpreter
 from .interpreters import (
     VRPositionInterpreter, FicTracInterpreter, WarnerTemperatureInterpreter,
     ProjectorInterpreter, EventsInterpreter, MetadataInterpreter,
+    LightSugarInterpreter,
 )
 from .interpreters.mixins.timepoints_mixins import HasTimepoints
 
@@ -22,6 +23,7 @@ from .interpreters.mixins.timepoints_mixins import HasTimepoints
 if TYPE_CHECKING:
     from ..utils.types import PathLike
 
+RosT = TypeVar("RosT", bound=ROSInterpreter)
 
 INTERPRETERS : List[Type[ROSInterpreter]]= [
     cls
@@ -62,9 +64,7 @@ class Experiment():
             self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
             self.vr_position.set_projector_config(self.projector.experiment_config)
 
-    #@property
-    #def bringup_config_(self)->dict:
-    def get_interpreter_type(self, cls : type)->ROSInterpreter:
+    def get_interpreter_type(self, cls : type[RosT])->Optional[RosT]:
         """ Returns interpreter of type cls, if any exists """
         return next(
             (
@@ -111,14 +111,20 @@ class Experiment():
         return self.get_interpreter_type(ProjectorInterpreter)
     
     @property
-    def start_timestamp(self)->int:
-        """ Nanoseconds """
-        return 0
+    def light_sugar(self)->Optional[LightSugarInterpreter]:
+        """ Returns the first LightSugarInterpreter class it finds,
+        if any """
+        return self.get_interpreter_type(LightSugarInterpreter)
     
-    @property
-    def end_timestamp(self)->int:
-        """ Nanoseconds """
-        return 0
+    # @property
+    # def start_timestamp(self)->int:
+    #     """ Nanoseconds """
+    #     return 0
+    
+    # @property
+    # def end_timestamp(self)->int:
+    #     """ Nanoseconds """
+    #     return 0
     
     @staticmethod
     def probe_start_and_end_timestamps(path : 'PathLike', suppress_warnings : bool = True)->Tuple[int, int]:

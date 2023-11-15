@@ -31,6 +31,10 @@ BAR_EVENTS = [
     'JumpOffsetDegrees',
 ]
 
+FEEDING_EVENTS = [
+
+]
+
 
 class EventsLog(ROSLog):
 
@@ -88,13 +92,6 @@ class EventsInterpreter(
             ],
         },
     )
-
-    def __init__(
-            self,
-            file_path : 'PathLike',
-        ):
-        # can be done appropriately
-        super().__init__(file_path)
 
     @property
     def df(self)->pd.DataFrame:

@@ -21,7 +21,8 @@ class ROSLog(ABC):
         self.path : Path = path
         self.open(path)
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def isvalid(cls, path : 'PathLike')->bool:
         """ Returns whether a path points to a valid log file."""
         return False
