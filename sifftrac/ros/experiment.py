@@ -56,11 +56,11 @@ class Experiment():
                 if (
                     (not file.is_dir())
                     and interpreter_class.isvalid(file)
-                    and (not '._' in file.name) # this annoying fucking macos thing
+                    and ('._' not in file.name) # this annoying fucking macos thing
                 ):
                     self.interpreters.append(interpreter_class(file))
     
-        if (self.vr_position != None) and (self.projector != None):
+        if (self.vr_position is not None) and (self.projector is not None):
             self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
             self.vr_position.set_projector_config(self.projector.experiment_config)
 

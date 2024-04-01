@@ -36,7 +36,7 @@ class ProjectorLog(ROSLog):
     
         y = YAML()
         info = y.load(path)
-        self.OLD_PROJECTOR_SPEC = not ('start_bar_in_front' in info.keys())
+        self.OLD_PROJECTOR_SPEC = 'start_bar_in_front' not in info.keys()
 
 class ProjectorInterpreter(
     ConfigFileParamsMixin,
@@ -99,7 +99,6 @@ class ProjectorInterpreter(
             return Pi/2 - 174.9*Pi/180
         else:
             return Pi/2
-        
     
     @property
     def projector_type_schematic(self)->'ndarray':

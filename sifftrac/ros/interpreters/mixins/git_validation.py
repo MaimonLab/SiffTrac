@@ -146,7 +146,7 @@ def is_valid_git(config_from_yaml, git_config : GitConfig)->str:
             git_config.commit_time,
             format = DATETIME_FORMAT
         ):
-        ret_string += f"""
+        ret_string += """
             Git commit time is more recent than the last time
             this interpreter's compatibility has been validated
             against it. This may indicate that the interpreter
@@ -156,7 +156,7 @@ def is_valid_git(config_from_yaml, git_config : GitConfig)->str:
     executables = git_config.executable
     if not isinstance(executables, list):
         executables = [executables]
-    if not (config_from_yaml['executable'] in executables):
+    if config_from_yaml['executable'] not in executables:
         ret_string += f"""
             The executable {config_from_yaml['executable']} is not
             one for which this interpreter has been validated.\n

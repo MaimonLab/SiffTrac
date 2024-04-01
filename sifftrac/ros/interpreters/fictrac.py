@@ -1,12 +1,10 @@
 """ Simply wraps the fulltrac output -- DOES NOT do unit conversions """
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 import numpy as np
 
-from ...utils import BallParams
 from .ros_interpreter import ROSInterpreter, ROSLog
 from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 from .mixins.git_validation import GitConfig, GitValidatedMixin
@@ -104,7 +102,7 @@ class FicTracInterpreter(
 
     @property
     def position(self)->ComplexArray:
-        """ Complex position """
+        """ Complex position (in radians) """
         return self.df['complex_pos'].values
 
     @property

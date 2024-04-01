@@ -1,1 +1,1 @@
-from .ballparams import BallParams
+from .ballparams import BallParams # noqa: F401

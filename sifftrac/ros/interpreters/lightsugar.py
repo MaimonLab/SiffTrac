@@ -3,7 +3,7 @@ Interprets the log from the so-called `LightSugarDriver` package
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Any, List
+from typing import TYPE_CHECKING, Iterable
 
 import pandas as pd
 
@@ -12,7 +12,6 @@ from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 
 if TYPE_CHECKING:
     from ...utils.types import PathLike
-    from numpy import ndarray
 
 class LightSugarLog(ROSLog):
 
@@ -68,20 +67,20 @@ class LightSugarInterpreter(
             return self.log.df
 
     @property
-    def feeding_events(self)->pd.DataFrame:
+    def feeding_events(self)->Iterable[pd.Series]:
         """
         Returns rows of the df where the 'sugar_feed_active' column is true
         """
-        return self.df[self.df['sugar_feed_active'] == True]
+        return (x for _, x in self.df[self.df['sugar_feed_active'] == True].iterrows())
     
     @property
-    def laser_events(self)->pd.DataFrame:
+    def laser_events(self)->Iterable[pd.Series]:
         """
         Returns rows of the df where any of the laser columns are true
         """
-        return self.df[
+        return (x for _, x in self.df[
             (self.df['laser_const_set_active'] == True)
-            | (self.df['laser_exponential_set_active'] == True) 
-        ]
+            | (self.df['laser_exponential_set_active'] == True)
+        ].iterrows())
 
 

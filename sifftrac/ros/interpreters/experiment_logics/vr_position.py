@@ -5,7 +5,7 @@ VR Position uses 'natural' units, e.g. "Bar is up", "Up is 0 degrees",
 "Units are mm" etc.
 """
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Any, List
+from typing import Optional, List
 
 import pandas as pd
 import numpy as np
@@ -15,7 +15,7 @@ from ..mixins.config_file_params import ConfigParams, ConfigFileUpOneLevelParams
 from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
 from ..mixins.timepoints_mixins import HasTimepoints
 
-from ....utils.types import PathLike, ComplexArray, FloatArray, IntArray, BoolArray
+from ....utils.types import PathLike, ComplexArray, FloatArray
 
 VR_COLUMNS = [
     'timestamp',

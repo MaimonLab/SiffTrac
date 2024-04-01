@@ -6,9 +6,9 @@ Each type of node logs data its own way, usually with characteristic
 log file names, types, locations, etc. 
 """
 
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type, List, Union
 from pathlib import Path
-from abc import ABC, abstractmethod, abstractclassmethod
+from abc import ABC, abstractmethod
 import logging
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class ROSInterpreter(ABC):
     The ROSInterpreter class is a class for interpreting the various log
     files for each type of ROS node.
     """
-    LOG_TYPE : Type[ROSLog]
+    LOG_TYPE : Union[Type[ROSLog], List[Type[ROSLog]]]
     LOG_TAG : str # file suffix
 
     def __init__(self, file_path : 'PathLike'):
@@ -68,13 +68,21 @@ class ROSInterpreter(ABC):
         self.log = self.open(self.file_path)
 
     @classmethod
-    def open(cls, file_path : 'PathLike')->ROSLog:
+    def open(cls, file_path : 'PathLike')->Union[ROSLog, List[ROSLog]]:
         """
         The open method returns a ROSLog object,
         which confirms that the file is of the correct type
         and provides access to the relevant attributes
         """
         file_path = Path(file_path)
+        if isinstance(cls.LOG_TYPE, list):
+            log_list = []
+            for log_type in cls.LOG_TYPE:
+                if log_type.isvalid(file_path):
+                    log_list.append(log_type(file_path))
+
+            return log_list
+
         return cls.LOG_TYPE(file_path)
     
     @classmethod

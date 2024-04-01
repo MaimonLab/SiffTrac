@@ -9,7 +9,6 @@ import pandas as pd
 from ..ros_interpreter import ROSInterpreter, ROSLog
 from ..mixins.config_file_params import ConfigParams, ConfigFileUpOneLevelParamsMixin
 from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
-from ..mixins.timepoints_mixins import HasTimepoints
 
 if TYPE_CHECKING:
     from ....utils.types import PathLike
@@ -30,11 +29,6 @@ BAR_EVENTS = [
     'BarSet',
     'JumpOffsetDegrees',
 ]
-
-FEEDING_EVENTS = [
-
-]
-
 
 class EventsLog(ROSLog):
 
@@ -92,6 +86,12 @@ class EventsInterpreter(
             ],
         },
     )
+
+    def __str__(self) -> str:
+        return self.df.__str__()
+
+    def __repr__(self) -> str:
+        return self.df.__repr__()
 
     @property
     def df(self)->pd.DataFrame:
