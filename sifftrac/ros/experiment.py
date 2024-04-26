@@ -15,7 +15,7 @@ from .interpreters.ros_interpreter import ROSInterpreter
 from .interpreters import (
     VRPositionInterpreter, FicTracInterpreter, WarnerTemperatureInterpreter,
     ProjectorInterpreter, EventsInterpreter, MetadataInterpreter,
-    LightSugarInterpreter,
+    LightSugarInterpreter, PicoPumpInterpreter
 )
 from .interpreters.mixins.timepoints_mixins import HasTimepoints
 
@@ -116,6 +116,14 @@ class Experiment():
         if any """
         return self.get_interpreter_type(LightSugarInterpreter)
     
+    @property
+    def picopumps(self)->List[PicoPumpInterpreter]:
+        """ Returns all the PicoPumpInterpreter classes it finds """
+        return [
+            interpreter
+            for interpreter in self.interpreters
+            if isinstance(interpreter, PicoPumpInterpreter)
+        ]
     # @property
     # def start_timestamp(self)->int:
     #     """ Nanoseconds """

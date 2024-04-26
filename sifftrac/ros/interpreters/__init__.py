@@ -5,3 +5,4 @@ from .warner_temperature import WarnerTemperatureInterpreter # noqa: F401
 from .experiment_logics.events import EventsInterpreter # noqa: F401
 from .experiment_logics.vr_position import VRPositionInterpreter # noqa: F401
 from .lightsugar import LightSugarInterpreter # noqa: F401
+from .mcc.picopump import PicoPumpInterpreter # noqa: F401
