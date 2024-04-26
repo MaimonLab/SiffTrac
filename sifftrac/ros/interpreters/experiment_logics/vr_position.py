@@ -16,6 +16,7 @@ from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
 from ..mixins.timepoints_mixins import HasTimepoints
 
 from ....utils.types import PathLike, ComplexArray, FloatArray
+from ....utils import memoize_property
 
 VR_COLUMNS = [
     'timestamp',
@@ -105,6 +106,7 @@ class VRPositionInterpreter(
             return self.log.df
 
     @property
+    @memoize_property
     def position(self)->ComplexArray:
         """ Complex valued, in mm"""
         return (
@@ -114,6 +116,7 @@ class VRPositionInterpreter(
         )
 
     @property
+    @memoize_property
     def x_position(self)->FloatArray:
         """ In mm """
         return (
@@ -123,6 +126,7 @@ class VRPositionInterpreter(
         ).real
         
     @property
+    @memoize_property
     def y_position(self)->FloatArray:
         """ In mm """
         return (
@@ -132,6 +136,7 @@ class VRPositionInterpreter(
         ).imag
         
     @property
+    @memoize_property
     def vr_translation_speed(self)->FloatArray:
         """ In mm / sec """
         return (
@@ -140,6 +145,7 @@ class VRPositionInterpreter(
         )
     
     @property
+    @memoize_property
     def vr_heading(self)->FloatArray:
         """ 0 is bar in front, for bar type experiments """
         return np.angle(
@@ -148,6 +154,7 @@ class VRPositionInterpreter(
         )
     
     @property
+    @memoize_property
     def unwrapped_heading(self)->FloatArray:
         """ 2*pi*n is bar in front, for bar type experiments """
         return np.unwrap(self.vr_heading)

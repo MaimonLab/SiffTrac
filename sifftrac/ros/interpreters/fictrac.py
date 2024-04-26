@@ -11,6 +11,7 @@ from .mixins.git_validation import GitConfig, GitValidatedMixin
 from .mixins.timepoints_mixins import HasTimepoints
 
 from ...utils.types import PathLike, ComplexArray, FloatArray, IntArray
+from ...utils import memoize_property
     
 FICTRAC_COLUMNS = [
     'timestamp',
@@ -122,24 +123,70 @@ class FicTracInterpreter(
     @property
     def heading(self)->FloatArray:
         return self.df['integrated_heading_lab'].values
+    
+    @property
+    def dt(self)->FloatArray:
+        return self.df['datetime'].diff().dt.total_seconds().values.astype(float)
+    
+    @property
+    @memoize_property
+    def cheading(self)->ComplexArray:
+        """ Complex heading """
+        return np.exp(1j*self.heading)
         
     @property
     def timestamp(self)->IntArray:
         return self.df['timestamp'].values
     
     @property
+    @memoize_property
+    def angular_velocity(self)->FloatArray:
+        """ In rad / sec -- positive means counterclockwise """
+        return (
+            -np.angle(self.cheading[1:]/self.cheading[:-1]) /
+            self.dt[1:]
+        )
+
+    @property
+    @memoize_property
     def movement_speed(self)->FloatArray:
         """ In rad / sec """
         return (
-            self.df['animal_movement_speed'].values.astype(float) / 
-            self.df['datetime'].diff().dt.total_seconds().values.astype(float)
+            self.df['animal_movement_speed'].values.astype(float)[1:] / 
+            self.dt[1:]
         )
     
     @property
+    @memoize_property
     def translational_speed(self)->FloatArray:
         """ In rad / sec """
-        return (
-            np.abs(np.diff(self.position))/
-            self.df['datetime'].diff().dt.total_seconds().values.astype(float)
-        )
-        
+        return np.abs(self.heading_projection) / self.dt[1:]
+    
+    @property
+    @memoize_property
+    def heading_projection(self)->ComplexArray:
+        """
+        Projects translation onto heading 
+        Real part is aligned part, imaginary part is orthogonal part.
+        For every pair of timepoints, uses the heading
+        at the start of the motion. Heading theta = 0 is
+        aligned with the x-axis -- to the fly's right!
+        """
+        return np.diff(self.position) / self.cheading[:-1]
+
+    @property
+    @memoize_property
+    def forward_speed(self) -> FloatArray:
+        """
+        In rad / sec -- project translational speed onto heading --
+        """
+        return np.imag(self.heading_projection)/self.dt[1:]
+    
+    @property
+    @memoize_property
+    def sideslip(self):
+        """
+        In rad / sec -- translational speed orthogonal to heading,
+        with positive values corresponding to ego-centric "rightward".
+        """
+        return np.real(self.heading_projection)/self.dt[1:]

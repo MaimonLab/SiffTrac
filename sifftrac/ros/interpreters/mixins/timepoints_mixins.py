@@ -62,7 +62,7 @@ class HasTimepoints():
 
     @classmethod
     def open(cls, path : 'PathLike')->'ROSLog':
-        open_call = getattr(super(), 'open')
+        open_call = getattr(super(), 'open', False)
         if not (open_call and callable(open_call)):
             return
         log = open_call(path)

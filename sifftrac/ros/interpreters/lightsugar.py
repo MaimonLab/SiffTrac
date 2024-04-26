@@ -71,7 +71,10 @@ class LightSugarInterpreter(
         """
         Returns rows of the df where the 'sugar_feed_active' column is true
         """
-        return (x for _, x in self.df[self.df['sugar_feed_active'] == True].iterrows())
+        return (x for _, x in self.df[
+            self.df['sugar_feed_active'].values
+            #self.df['sugar_feed_active'] == True
+        ].iterrows())
     
     @property
     def laser_events(self)->Iterable[pd.Series]:
@@ -79,8 +82,10 @@ class LightSugarInterpreter(
         Returns rows of the df where any of the laser columns are true
         """
         return (x for _, x in self.df[
-            (self.df['laser_const_set_active'] == True)
-            | (self.df['laser_exponential_set_active'] == True)
+            self.df['laser_const_set_active'].values
+            or self.df['laser_exponential_set_active'].values
+            #(self.df['laser_const_set_active'] == True)
+            #| (self.df['laser_exponential_set_active'] == True)
         ].iterrows())
 
 

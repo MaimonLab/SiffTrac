@@ -11,11 +11,16 @@ from .mixins.timepoints_mixins import HasTimepoints
 if TYPE_CHECKING:
     from ...utils.types import PathLike
 
-WARNER_COLUMNS = [
+WARNER_COLUMNS_OLD = [
     'timestamp',
     'frame_id',
     'Temperature (C)_0_channel_idx',
     'Temperature (C)_0_voltage',
+]
+
+WARNER_COLUMNS_NEW = [
+    'timestamp',
+    'temperature_measurement',
 ]
 
 class WarnerTemperatureLog(ROSLog):
@@ -25,11 +30,18 @@ class WarnerTemperatureLog(ROSLog):
         """ Checks extension and column titles """
         path = Path(path)
         valid = path.suffix == '.csv'
-        valid &= 'read' in path.name
+        valid &= any(
+            appellation in path.name
+            for appellation in ['read', 'measurement']
+        )
+                  
         if not valid:
             return False
         cols = pd.read_csv(path, sep=',', nrows=1).columns
-        valid &= all([col in cols for col in WARNER_COLUMNS])
+        valid &= (
+            all([col in cols for col in WARNER_COLUMNS_OLD])
+            or all([col in cols for col in WARNER_COLUMNS_NEW])
+        )
         return valid
 
     def open(self, path : 'PathLike'):
@@ -57,17 +69,30 @@ class WarnerTemperatureInterpreter(
     LOG_TYPE = WarnerTemperatureLog
     LOG_TAG = '.csv'
 
-    git_config = GitConfig(
-        branch = 'sct_dev',
-        commit_time = '2023-01-06 14:18:25-5:00',
-        package = 'mcc_driver',
-        repo_name = 'mcc_driver',
-        executable = 'warner_temp_control'
-    )
+    git_config = [
+        GitConfig(
+            branch = 'sct_dev',
+            commit_time = '2023-01-06 14:18:25-5:00',
+            package = 'mcc_driver',
+            repo_name = 'mcc_driver',
+            executable = 'warner_temp_control'
+        ),
+        GitConfig(
+            repo_name = 'mcc_driver',
+            package = 'mcc_driver',
+            branch = 'sct_dev',
+            executable = 'mcc1208fs_adio',
+            commit_time = '2024-04-14 19:00:43-04:00',
+            commit_hash = 'af2adae8e219951151a7dbcdfc9a80885ffbb228',
+        )
+    ]
 
     config_params = ConfigParams(
         packages = ['mcc_driver'],
-        executables={'mcc_driver' : ['warner_temp_control']},
+        executables={'mcc_driver' : [
+            'warner_temp_control',
+            'mcc1208fs_adio',
+        ]},
     )
 
     def __init__(
@@ -75,6 +100,15 @@ class WarnerTemperatureInterpreter(
             file_path : 'PathLike',
         ):
         super().__init__(file_path)
+        # if it's using the old temperature logging convention
+        # (the Thomas style MCC device), rename the columns
+        if all(col in self.log.df.columns for col in WARNER_COLUMNS_OLD):
+            self.log.df.rename(
+                columns={
+                    'Temperature (C)_0_voltage' : 'temperature_measurement'
+                },
+                inplace=True
+            )
 
     @property
     def df(self)->pd.DataFrame:
@@ -90,7 +124,7 @@ class WarnerTemperatureInterpreter(
 
     @property
     def temperature(self)->pd.Series:
-        return self.df['Temperature (C)_0_voltage']
+        return self.df['temperature_measurement']
     
     @property
     def set_values(self)->pd.Series:
