@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Type, Optional, List, Tuple, TypeVar
 import inspect
 
 import numpy as np
+from ruamel.yaml import YAML
 
 from . import interpreters
 from .interpreters.ros_interpreter import ROSInterpreter
@@ -40,6 +41,10 @@ class Experiment():
     1) which types of interpreters are needed for the data therein
     and 2) links variables up that should influence one another (e.g.
     projector configuration files with the VR Position).
+
+    TODO: Instead of making properties for each type of `Interpreter`,
+    make them document themselves by alias. Worse for linters, better
+    for use I think?
     """
 
     def __init__(self, path : 'PathLike'):
@@ -73,6 +78,12 @@ class Experiment():
             ),
             None,
         )
+
+    @property
+    def config(self)->Optional[YAML]:
+        if self.main_path.glob('*_config.yaml'):
+            return YAML().load(next(self.main_path.glob('*_config.yaml')))
+
 
     @property
     def genotype(self)->str:

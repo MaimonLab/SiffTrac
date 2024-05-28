@@ -30,7 +30,12 @@ class PicoPumpLog(ROSLog):
                   
         if not valid:
             return False
-        #cols = pd.read_csv(path, sep=',', nrows=1).columns
+
+        cols = pd.read_csv(path, sep=',', nrows=1).columns 
+        any(
+            name in col for name in ['picopump', 'picopulse']
+            for col in cols
+        )
         #valid &= all([col in cols for col in PICOPUMP_COLUMNS])
         return valid
 
@@ -82,7 +87,7 @@ class PicoPumpInterpreter(
         super().__init__(file_path)
         self._name = next(
             col for col in self.df.columns
-            if 'picopump' in col
+            if any(name in col for name in ['picopump', 'picopulse'])
         )
 
     @property
@@ -93,5 +98,5 @@ class PicoPumpInterpreter(
     
     @property
     def flow(self)->pd.Series:
-        return self.df[self._name]
+        return self.df[self._name].astype(bool)
     
