@@ -1,6 +1,8 @@
 """ Simply wraps the fulltrac output -- DOES NOT do unit conversions """
 
 from pathlib import Path
+from typing import Callable, Any
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -40,6 +42,13 @@ FICTRAC_COLUMNS = [
     'sequence_counter'
 ]
 
+def dt_zeros_to_nan(f):
+    """ Correct infs when a delta time is zero
+    so they can be masked out with nan operations
+    """
+    def wrapper(*args, **kwargs):
+        return np.nan_to_num(f(*args, **kwargs), posinf = np.nan, neginf = np.nan)
+    return wrapper
 class FicTracLog(ROSLog):
 
     @classmethod
@@ -84,8 +93,10 @@ class FicTracInterpreter(
     )
 
     config_params = ConfigParams(
-        packages = ['fictrac_ros2'],
-        executables={'fictrac_ros2' : ['trackmovements']},
+        packages = ['fictrac_ros2', 'flir_camera_driver'],
+        executables={'fictrac_ros2' : ['trackmovements'],
+                     'flir_camera_driver' : ['publish_camera']
+                     },
     )
 
     def __init__(
@@ -122,8 +133,44 @@ class FicTracInterpreter(
         
     @property
     def heading(self)->FloatArray:
+        """
+        Note that in most fictrac rigs, this is actually INVERTED
+        because the first users did not correct for an extra mirror
+        in the camera.... To know if your rig is mirrored, check the
+        `mirrored` property of this class.
+        """
         return self.df['integrated_heading_lab'].values
     
+    @property
+    def mirrored(self)->bool:
+        """
+        Only applicable on rigs where there IS a mirror between the camera
+        and the ball! TODO find a way to demarcate if this is true.... I don't know
+        if there is a way to do this definitively though...
+        """
+        if not hasattr(self, 'experiment_config') or self.experiment_config is None:
+            warnings.warn("No experiment config found -- assuming mirrored")
+            return True
+        image_topic_name = (
+            next(config for config in self.experiment_config if 'fictrac_ros2' in config.packages)
+            .parameters['image_topic']
+        )
+
+        ball_cam = next(
+            config for config in self.experiment_config if (
+                'flir_camera_driver' in config.packages
+                and image_topic_name == config.parameters['image_topic']
+            )
+        )
+
+        if 'camera_settings' not in ball_cam.parameters:
+            warnings.warn("No `camera_settings` parameter found -- assuming mirrored")
+            return True
+        if 'ReverseX' not in ball_cam.parameters['camera_settings']:
+            warnings.warn("No `ReverseX` parameter found -- assuming mirrored")
+            return True
+        return not ball_cam.parameters['camera_settings']['ReverseX']
+
     @property
     def dt(self)->FloatArray:
         return self.df['datetime'].diff().dt.total_seconds().values.astype(float)
@@ -131,7 +178,15 @@ class FicTracInterpreter(
     @property
     @memoize_property
     def cheading(self)->ComplexArray:
-        """ Complex heading """
+        """
+        Complex heading
+
+        Note that in most fictrac rigs, this is actually INVERTED
+        because the first users did not correct for an extra mirror
+        in the camera.... To know if your rig is mirrored, check the
+        `mirrored` property of this class.
+        
+        """
         return np.exp(1j*self.heading)
         
     @property
@@ -139,6 +194,7 @@ class FicTracInterpreter(
         return self.df['timestamp'].values
     
     @property
+    @dt_zeros_to_nan
     @memoize_property
     def angular_velocity(self)->FloatArray:
         """ In rad / sec -- positive means counterclockwise """
@@ -146,8 +202,9 @@ class FicTracInterpreter(
             -np.angle(self.cheading[1:]/self.cheading[:-1]) /
             self.dt[1:]
         )
-
+    
     @property
+    @dt_zeros_to_nan
     @memoize_property
     def movement_speed(self)->FloatArray:
         """ In rad / sec """
@@ -157,12 +214,35 @@ class FicTracInterpreter(
         )
     
     @property
+    @dt_zeros_to_nan
     @memoize_property
     def translational_speed(self)->FloatArray:
         """ In rad / sec """
         return np.abs(self.heading_projection) / self.dt[1:]
     
+    def translational_speed_filtered(
+            self,
+            filter_fn : Callable[[np.ndarray[Any, float]], np.ndarray[Any, complex]]
+        ) -> FloatArray:
+        """ Filters translational speed BEFORE applying the absolute value, 
+        so that frame-to-frame jitter is not added in. Result is in rad/sec.
+
+        # Arguments
+
+        * `filter_fn : Callable`
+            The filter to apply to the frame-by-frame translational _velocity_
+            (not speed!) Should be a `Callable` with the signature
+            `filter_fn(arr : np.ndarray[Any, complex]) -> np.ndarray[Any, float]`
+        
+        # Returns
+
+        `FloatArray` : The filtered translational speed (in radians / sec)
+        """
+
+        return np.abs(filter_fn(self.heading_projection/self.dt[1:]))
+
     @property
+    @dt_zeros_to_nan
     @memoize_property
     def heading_projection(self)->ComplexArray:
         """
@@ -175,14 +255,16 @@ class FicTracInterpreter(
         return np.diff(self.position) / self.cheading[:-1]
 
     @property
+    @dt_zeros_to_nan 
     @memoize_property
-    def forward_speed(self) -> FloatArray:
+    def forward_velocity(self) -> FloatArray:
         """
         In rad / sec -- project translational speed onto heading --
         """
         return np.imag(self.heading_projection)/self.dt[1:]
-    
+                
     @property
+    @dt_zeros_to_nan
     @memoize_property
     def sideslip(self):
         """

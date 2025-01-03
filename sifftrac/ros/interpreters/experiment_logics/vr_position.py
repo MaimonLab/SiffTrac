@@ -152,7 +152,7 @@ class VRPositionInterpreter(
             np.exp(1j*self.df['rotation_z'].values.astype(float))
             * np.exp(-1j*self.bar_in_front_angle)
         )
-    
+
     @property
     @memoize_property
     def unwrapped_heading(self)->FloatArray:
@@ -163,3 +163,44 @@ class VRPositionInterpreter(
     def timestamp(self)->np.ndarray:
         return self.df['timestamp'].values
     
+    def correct_position_for_bar_jump(self, jump_time : int, jump_angle : float)->None:
+        """
+        Corrects the position property for a bar jump at a given time
+        (in epoch timestamps) and angle (in radians). Presumes that the
+        *bar position itself* is already corrected. Modifies **in place**,
+        meaning that the position properties will be updated.
+
+        ## Parameters
+
+        - ```jump_time : int```
+            The time of the bar jump in epoch time (nanoseconds)
+
+        - ```jump_angle : float```
+            The angle of the bar jump in radians        
+        """
+
+        # Find the index of the jump time
+        jump_idx = np.searchsorted(self.timestamp, jump_time)
+
+        new_position = self.position.copy()
+
+        # Correct the position
+        new_position[jump_idx:] = (
+            new_position[jump_idx:] - new_position[jump_idx]
+        ) * np.exp(-1j*jump_angle) + new_position[jump_idx]
+        
+        # Have to undo the transformations applied to the position
+        # to get back to 'complex_pos'
+        self.log.df['complex_pos'] = (
+            new_position
+            *np.exp(-1j*self.bar_in_front_angle)
+            /self.ball_radius
+        )
+
+        # Delete the memoized ones
+        if hasattr(self, '_position'):
+            del self._position
+        if hasattr(self, '_x_position'):
+            del self._x_position
+        if hasattr(self, '_y_position'):
+            del self._y_position

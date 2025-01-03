@@ -78,6 +78,29 @@ class Experiment():
             ),
             None,
         )
+    
+    def correct_all_bar_jumps(self):
+        """
+        Iterates through all events containing `JumpOffsetDegrees` in their
+        `Event type` and adjusts the position-type attributes in the 
+        `VRPositionInterpreter` to accurately track the position after the bar
+        jump.
+
+        ## Example
+
+        ```python
+            exp = Experiment('path/to/experiment')
+            exp.correct_all_bar_jumps()
+        ```
+        """
+        if self.events is None:
+            return
+        for _, x in self.events.df.iterrows():
+            if x['Event type'] == 'JumpOffsetDegrees':
+                offset = float(x['Event message'].split('Offset bar by ')[-1])
+                self.vr_position.correct_position_for_bar_jump(
+                    x['timestamp'], offset
+                )
 
     @property
     def config(self)->Optional[YAML]:

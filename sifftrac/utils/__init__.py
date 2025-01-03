@@ -2,7 +2,6 @@ from functools import wraps
 
 from .ballparams import BallParams # noqa: F401
 
-
 def memoize_property(f):
     """
     Takes a property and ensures it's
