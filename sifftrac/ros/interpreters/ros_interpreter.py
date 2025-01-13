@@ -95,7 +95,7 @@ class ROSInterpreter(ABC):
             return cls.LOG_TYPE.isvalid(file_path)
         except Exception as e:
             if report_failure:
-                logging.warning(f"""
+                logging.info(f"""
                 Failed to validate file {file_path} as a {cls.LOG_TYPE.__name__} log
                 due to error: {e.with_traceback(e.__traceback__)}
                 """

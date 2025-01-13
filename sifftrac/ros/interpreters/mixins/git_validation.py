@@ -31,7 +31,7 @@ class GitValidatedMixin():
 
     git_config : Union[GitConfig, List[GitConfig]] = []
 
-    def __init__(self, file_path : Union[str, Path], *args, **kwargs):
+    def __init__(self, file_path : Union[str, Path], warn : bool = False, *args, **kwargs):
         if not hasattr(self.__class__, 'git_config'):
             logging.warn(
                 f"""
@@ -58,27 +58,27 @@ class GitValidatedMixin():
             file_path = Path(file_path)
 
         # look for a file that ends in the right extension
-        # and contains the file name with package_git_state
-        putative_gits = file_path.parent.glob('*package_git_state*')
+        # and contains the file name with "_git_state"
+        putative_gits = file_path.parent.glob('*_git_state*')
         putative_gits = [
             p for p in putative_gits
             if (p.suffix == '.yaml') and not (p.name.startswith('._'))
         ]
         if len(putative_gits) == 0:
             # try the current path just in case
-            putative_gits = file_path.glob('*package_git_state*')
+            putative_gits = file_path.glob('_git_state*')
             putative_gits = [
                 p for p in putative_gits
                 if (p.suffix == '.yaml') and not (p.name.startswith('._'))
             ]
             if len(putative_gits) == 0:
-                logging.warning(f"""
+                logging.info(f"""
                     No git state file found for {file_path}.\n
                     Cannot guarantee compatibility with the data.
                 """)
                 return
         if len(putative_gits) > 1:
-            logging.warning(f"""
+            logging.info(f"""
                 Multiple git state files found for {file_path}:\n
                 {putative_gits}
                 Cannot guarantee compatibility with the data.
@@ -116,7 +116,7 @@ class GitValidatedMixin():
         ]
         
         if len(config) == 0:
-            logging.warning(f"""
+            logging.info(f"""
                 No git package found for {file_path} with a compatible
                 node for a {self.__class__.__name__}.\n
                 Cannot guarantee compatibility with the data.
@@ -130,7 +130,7 @@ class GitValidatedMixin():
                 warn_string += new_warn+"\n"
         
         if len(warn_string)>0:    
-            logging.warning(f"""
+            logging.info(f"""
                 At least one invalid or incompatible git state found for
                 {file_path} interpreter {self.__class__.__name__}:\n
                 {warn_string}

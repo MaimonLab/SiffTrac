@@ -71,7 +71,7 @@ class EventsInterpreter(
     git_config = [
         GitConfig(
             branch = 'sct_eternarig_dev',
-            commit_time = '2023-01-21 13:06:53-5:00',
+            commit_time = '2024-11-17 18:06:25-05:00',
             package = 'eternarig_experiment_logic',
             repo_name = 'eternarig_experiment_logic',
             executable = 'sct_sutter_bar'

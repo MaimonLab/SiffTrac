@@ -84,13 +84,29 @@ class FicTracInterpreter(
     LOG_TYPE = FicTracLog
     LOG_TAG = '.csv'
 
-    git_config = GitConfig(
-        branch = 'main',
-        commit_time = '2022-08-19 16:51:19-04:00',
-        package = 'fictrac_ros2',
-        repo_name = 'fictrac_ros2',
-        executable = 'trackmovements'
-    )
+    git_config = [
+        GitConfig(
+            branch = 'main',
+            commit_time = '2022-08-19 16:51:19-04:00',
+            package = 'fictrac_ros2',
+            repo_name = 'fictrac_ros2',
+            executable = 'trackmovements'
+        ),
+        GitConfig(
+            branch = 'dev',
+            commit_time = '2024-03-17 14:29:10-04:00',
+            package = 'fictrac_ros2',
+            repo_name = 'fictrac_ros2',
+            executable = 'trackmovements'
+        ),
+        GitConfig(
+            branch = 'dev',
+            package = 'flir_camera_driver',
+            commit_time = '2024-10-16 11:38:07-04:00',
+            repo_name = 'flir_camera_driver',
+            executable = 'publish_camera'
+        )
+    ]   
 
     config_params = ConfigParams(
         packages = ['fictrac_ros2', 'flir_camera_driver'],
@@ -172,8 +188,15 @@ class FicTracInterpreter(
         return not ball_cam.parameters['camera_settings']['ReverseX']
 
     @property
-    def dt(self)->FloatArray:
+    def dt(self)->'FloatArray':
+        """ Difference in timestamps between each sample in seconds """
         return self.df['datetime'].diff().dt.total_seconds().values.astype(float)
+    
+    @property
+    @memoize_property
+    def median_dt(self) -> float:
+        """ Median delta time in seconds """
+        return np.median(self.dt[1:])
     
     @property
     @memoize_property

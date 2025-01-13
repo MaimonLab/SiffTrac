@@ -3,13 +3,14 @@ from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML
 from numpy import pi as Pi
+import numpy as np
 
 from .ros_interpreter import ROSInterpreter, ROSLog
 from .mixins.git_validation import GitConfig, GitValidatedMixin
 from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 
 if TYPE_CHECKING:
-    from ...utils.types import PathLike
+    from ...utils.types import PathLike, FloatArray
     from numpy import ndarray
 
 class ProjectorLog(ROSLog):
@@ -63,6 +64,12 @@ class ProjectorInterpreter(
             repo_name = 'projector_driver',
             executable = 'dlpc_projector_settings',
         ),
+        GitConfig(
+            branch = 'dev',
+            commit_time = '2024-11-11 13:49:33-05:00',
+            package = 'projector_driver',
+            executable = 'projector_bar',
+        ),
     ]
 
     config_params = ConfigParams(
@@ -104,3 +111,11 @@ class ProjectorInterpreter(
     def projector_type_schematic(self)->'ndarray':
         """ Returns a small image that symbolizes the type of projector display """
         raise NotImplementedError("Not yet implemented")
+    
+    @property
+    def dt(self)->'FloatArray':
+        return self.df['datetime'].diff().dt.total_seconds().values.astype(float)
+    
+    @property
+    def median_dt(self) -> float:
+        return np.median(self.dt[1:])

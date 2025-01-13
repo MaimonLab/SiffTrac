@@ -57,7 +57,7 @@ class ConfigFileParamsMixin():
             if hasattr(self.__class__, 'config_params'):
                 self.validate_config(putative_config_file)
             else:
-                logging.warning(
+                logging.info(
                     f"""No config_params attribute found for {self.__class__.__name__}.
                     Unable to validate configuration file and store parameters.
                     To fix, implement a class attribute config_params of type ConfigParams.
@@ -65,7 +65,7 @@ class ConfigFileParamsMixin():
                 )
                 self.experiment_config = None
         except Exception as e:
-            logging.warning(
+            logging.info(
                 f"""Failed to read config file found for {self.__class__.__name__}.
                 Unable to validate configuration file and store parameters.
                 Exception: \n{e}
@@ -106,7 +106,7 @@ class ConfigFileParamsMixin():
         ]
 
         if len(this_data) == 0:
-            logging.warning(f"""
+            logging.info(f"""
                 Could not successfully parse config file for {config_file_path}.\n
             """)
             return
