@@ -6,7 +6,7 @@ import pandas as pd
 from .ros_interpreter import ROSInterpreter, ROSLog
 from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 from .mixins.git_validation import GitConfig, GitValidatedMixin
-from .mixins.timepoints_mixins import HasTimepoints
+from .mixins.timepoints_mixins import HasTimepoints, HasDatetimes
 
 if TYPE_CHECKING:
     from ...utils.types import PathLike

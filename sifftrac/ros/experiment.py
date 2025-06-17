@@ -102,6 +102,45 @@ class Experiment():
                     x['timestamp'], offset
                 )
 
+    def minimize_sideslip(self, fictrac_only : bool = True, lock_heading : bool = True):
+        """
+        Minimizes the sideslip from the `FullTrac` data and then applies
+        the resulting rotation to the `VRPositionInterpreter` if it exists.
+
+        ## Arguments
+        * `fictrac_only : bool`
+            If True, only minimizes the sideslip in the `FullTrac` interpreter
+            and does not apply the rotation to the `VRPositionInterpreter` or
+            any other interpreters to which it might apply. If the VR is a true
+            2D environment, this should be set to `True`, or else the positions
+            of objects in the environment will be altered in analyses (at least
+            as implemented for now).
+
+        * `lock_heading : bool`
+            If True, the heading will not be adjusted, only the position.
+        
+        ## Example
+        ```python
+            exp = Experiment('path/to/experiment')
+            exp.minimize_sideslip()
+        ```
+        """
+        if self.fulltrac is None:
+            raise ValueError("No FullTrac interpreter found in this experiment.")
+        
+        first_event_timestamp = self.events.df['timestamp'].min() if self.events else 0
+
+        fulltrac_min_r = self.fulltrac.minimize_sideslip(
+            lock_heading=lock_heading,
+            starting_idx = np.where(self.fulltrac.timestamps >= first_event_timestamp)[0][0] if self.events else 0
+        )
+        
+        if fictrac_only:
+            return
+        
+        if self.vr_position is not None:
+            self.vr_position.rotate_axes(fulltrac_min_r)
+
     @property
     def config(self)->Optional[YAML]:
         if self.main_path.glob('*_config.yaml'):

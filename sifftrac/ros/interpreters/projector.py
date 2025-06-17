@@ -8,6 +8,7 @@ import numpy as np
 from .ros_interpreter import ROSInterpreter, ROSLog
 from .mixins.git_validation import GitConfig, GitValidatedMixin
 from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
+from .mixins.timepoints_mixins import HasDatetimes
 
 if TYPE_CHECKING:
     from ...utils.types import PathLike, FloatArray
@@ -41,8 +42,9 @@ class ProjectorLog(ROSLog):
 
 class ProjectorInterpreter(
     ConfigFileParamsMixin,
-    GitValidatedMixin,
-    ROSInterpreter
+    # GitValidatedMixin,
+    HasDatetimes,
+    ROSInterpreter,
     ):
     """ ROS interpreter for the ROSFicTrac node"""
 
@@ -112,10 +114,4 @@ class ProjectorInterpreter(
         """ Returns a small image that symbolizes the type of projector display """
         raise NotImplementedError("Not yet implemented")
     
-    @property
-    def dt(self)->'FloatArray':
-        return self.df['datetime'].diff().dt.total_seconds().values.astype(float)
-    
-    @property
-    def median_dt(self) -> float:
-        return np.median(self.dt[1:])
+

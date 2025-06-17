@@ -2,9 +2,12 @@ from typing import TYPE_CHECKING, Tuple
 import os
 
 import pandas as pd
+import numpy as np
+
+from ....utils import memoize_property
 
 if TYPE_CHECKING:
-    from ....utils.types import PathLike
+    from ....utils.types import PathLike, FloatArray, IntArray
     from ..ros_interpreter import ROSLog
 
 # Copied from Jazz, not optimal because of the way it can't recognize
@@ -36,6 +39,11 @@ class HasTimepoints():
 
     def __init__(self, *args, **kwargs):
         return super().__init__(*args, **kwargs)
+
+    @property
+    def timestamp(self) -> 'IntArray':
+        """ Returns the timestamp column as an integer array """
+        return self.df[self.__class__.TIMESTAMP_COL].values.astype(int)
 
     @property
     def start_timestamp(self)->int:
@@ -94,3 +102,26 @@ class HasTimepoints():
         retstr = super().__repr__()
         retstr += f"\nStart timestamp: {self.start_timestamp}\nEnd timestamp: {self.end_timestamp}"
         return retstr
+    
+class HasDatetimes():
+    """
+    Mixin class for objects that have a start and end timestamp
+    stored in a dataframe. Adds a 'timestamp' column to the dataframe
+    as well that is in UTC and localized to US/Eastern time
+    """
+    DATETIME_COL : str = 'datetime'
+    df : pd.DataFrame
+
+    @property
+    @memoize_property
+    def dt(self) -> 'FloatArray':
+        """ Difference in timestamps between each sample in seconds """
+        return self.df[self.DATETIME_COL].diff().dt.total_seconds().values.astype(float)
+    
+    @property
+    @memoize_property
+    def median_dt(self) -> float:
+        """ Median delta time in seconds """
+        return np.median(self.dt[1:])
+    
+

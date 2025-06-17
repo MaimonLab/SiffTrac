@@ -5,7 +5,8 @@ VR Position uses 'natural' units, e.g. "Bar is up", "Up is 0 degrees",
 "Units are mm" etc.
 """
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Callable, Any
+from copy import copy
 
 import pandas as pd
 import numpy as np
@@ -13,10 +14,10 @@ import numpy as np
 from ..ros_interpreter import ROSInterpreter, ROSLog
 from ..mixins.config_file_params import ConfigParams, ConfigFileUpOneLevelParamsMixin
 from ..mixins.git_validation import GitConfig, GitValidatedUpOneLevelMixin
-from ..mixins.timepoints_mixins import HasTimepoints
+from ..mixins.timepoints_mixins import HasTimepoints, HasDatetimes
 
 from ....utils.types import PathLike, ComplexArray, FloatArray
-from ....utils import memoize_property
+from ....utils import memoize_property, dt_zeros_to_nan
 
 VR_COLUMNS = [
     'timestamp',
@@ -57,6 +58,7 @@ class VRPositionInterpreter(
     GitValidatedUpOneLevelMixin,
     ConfigFileUpOneLevelParamsMixin,
     HasTimepoints,
+    HasDatetimes,
     ROSInterpreter
     ):
     """ ROS interpreter for the ROSFicTrac node"""
@@ -100,6 +102,69 @@ class VRPositionInterpreter(
         """
         self.projector_config = projector_config
 
+    def rotate_axes(self,
+                    rotation_vector : np.ndarray[Any, float],
+                    lock_heading : bool = True):
+        """
+        Rotates the axes of the VR position log by the given rotation vector
+        (in radians), adjusting the position and heading accordingly.
+        If `lock_heading` is True, it will not adjust the heading.
+
+        Warning: only makes sense if the VR environment itself is not determined
+        by x and y position -- otherwise will incorrectly translate the interpreted
+        VR environment!
+
+        # Arguments
+        * `rotation_vector : np.ndarray[Any, float]`
+            A 3-element array representing the rotation vector in radians
+            (dx, dy, dh) where dx and dy are the x and y translations
+            and dh is the heading rotation in radians. Usually should come
+            from a `FullTrac` interpreter's `minimize_sideslip` method.
+        * `lock_heading : bool`
+            If True, the heading will not be adjusted, only the position.
+
+        """
+
+        raise NotImplementedError(
+            "This method is not implemented yet. "
+            "I'm actually not sure what it would mean to rotate the VR position axes "
+            "if it's a true 2D environment."
+        )
+        from ..fictrac import trajectory_from_deltas, rotate_about_axis_angle
+        x_y_traj = self.df['complex_pos'].values.astype(np.complex128)
+        dr = np.diff(x_y_traj, prepend = 0.0)
+        dx, dy = dr.real, dr.imag
+        dh = np.diff(np.unwrap(self.vr_heading), prepend = 0.0)
+
+        disp_mat = np.stack((dx, dy, dh), axis = -1)
+
+        rotated_deltas = rotate_about_axis_angle(
+            disp_mat,
+            rotation_vector,
+        )
+
+        disp_mat[:, 2] = dh
+
+        new_traj = trajectory_from_deltas(
+            rotated_deltas,
+        )
+
+        _x_position = new_traj.real
+        _y_position = new_traj.imag
+        _h = new_traj[:, 2]
+
+        self.df['complex_pos'] = _x_position + 1j*_y_position
+
+        for attr in ['_position', '_x_position', '_y_position', '_vr_translation_speed']:
+            if hasattr(self, attr):
+                delattr(self, attr)
+
+        if not lock_heading:
+            self.df['rotation_z'] = _h
+            for attr in ['_vr_heading', '_unwrapped_heading']:
+                if hasattr(self, attr):
+                    delattr(self, attr)
+
     @property
     def df(self)->pd.DataFrame:
         if hasattr(self.log, 'df'):
@@ -136,13 +201,36 @@ class VRPositionInterpreter(
         ).imag
         
     @property
+    @dt_zeros_to_nan
     @memoize_property
     def vr_translation_speed(self)->FloatArray:
         """ In mm / sec """
         return (
             np.abs(np.diff(self.position, prepend=np.nan)) 
-            / self.df['datetime'].diff().dt.total_seconds().values.astype(float)
+            / self.dt
         )
+    
+    @dt_zeros_to_nan
+    def vr_translational_speed_filtered(
+        self,
+        filter_fn : Callable[[np.ndarray[Any, float]], np.ndarray[Any, complex]],
+        replace_nans_with : float = 0.0
+    ) -> FloatArray:
+        
+        """
+        In mm / sec
+
+        # Arguments 
+        * `filter_fn : Callable`
+            The filter to apply to the frame-by-frame translational _velocity_
+            (not speed!) Should be a `Callable` with the signature
+            `filter_fn(arr : np.ndarray[Any, complex]) -> np.ndarray[Any, float]`
+        
+        """
+        position = copy(self.position)
+        position[np.isnan(position)] = replace_nans_with
+        filt_position = filter_fn(position)
+        return np.abs(np.diff(filt_position, prepend=np.nan)) / self.dt
     
     @property
     @memoize_property
@@ -159,10 +247,6 @@ class VRPositionInterpreter(
         """ 2*pi*n is bar in front, for bar type experiments """
         return np.unwrap(self.vr_heading)
         
-    @property
-    def timestamp(self)->np.ndarray:
-        return self.df['timestamp'].values
-    
     def correct_position_for_bar_jump(self, jump_time : int, jump_angle : float)->None:
         """
         Corrects the position property for a bar jump at a given time
