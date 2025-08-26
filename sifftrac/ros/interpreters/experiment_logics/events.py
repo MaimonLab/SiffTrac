@@ -28,6 +28,7 @@ SCANIMAGE_EVENTS = [
 BAR_EVENTS = [
     'BarSet',
     'JumpOffsetDegrees',
+    'VRSweep',
 ]
 
 class EventsLog(ROSLog):
@@ -92,6 +93,12 @@ class EventsInterpreter(
 
     def __repr__(self) -> str:
         return self.df.__repr__()
+
+    def __get_item__(self, row : int) -> pd.Series:
+        return self.df.iloc[row]
+
+    def __len__(self) -> int:
+        return len(self.df)
 
     @property
     def df(self)->pd.DataFrame:

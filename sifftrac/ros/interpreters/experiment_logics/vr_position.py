@@ -52,7 +52,7 @@ class VRPositionLog(ROSLog):
             """)
         
         self.df = pd.read_csv(path, sep=',')
-        self.df['complex_pos'] = 1j*(self.df['position_x'] - 1j*self.df['position_y'])
+        self.df['complex_pos'] = -self.df['position_y'] + 1j*self.df['position_x']
 
 class VRPositionInterpreter(
     GitValidatedUpOneLevelMixin,
@@ -235,7 +235,7 @@ class VRPositionInterpreter(
     @property
     @memoize_property
     def vr_heading(self)->FloatArray:
-        """ 0 is bar in front, for bar type experiments """
+        """ $Pi/2$ is bar in front, for bar type experiments """
         return np.angle(
             np.exp(1j*self.df['rotation_z'].values.astype(float))
             * np.exp(-1j*self.bar_in_front_angle)
@@ -282,9 +282,6 @@ class VRPositionInterpreter(
         )
 
         # Delete the memoized ones
-        if hasattr(self, '_position'):
-            del self._position
-        if hasattr(self, '_x_position'):
-            del self._x_position
-        if hasattr(self, '_y_position'):
-            del self._y_position
+        for attr in ['_position', '_x_position', '_y_position', '_vr_translation_speed']:
+            if hasattr(self, attr):
+                delattr(self, attr)

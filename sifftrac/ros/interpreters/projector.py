@@ -6,12 +6,12 @@ from numpy import pi as Pi
 import numpy as np
 
 from .ros_interpreter import ROSInterpreter, ROSLog
-from .mixins.git_validation import GitConfig, GitValidatedMixin
+from .mixins.git_validation import GitConfig
 from .mixins.config_file_params import ConfigParams, ConfigFileParamsMixin
 from .mixins.timepoints_mixins import HasDatetimes
 
 if TYPE_CHECKING:
-    from ...utils.types import PathLike, FloatArray
+    from ...utils.types import PathLike
     from numpy import ndarray
 
 class ProjectorLog(ROSLog):
@@ -25,8 +25,6 @@ class ProjectorLog(ROSLog):
         """ Checks extension, ideally do more """
         path = Path(path)
         valid = path.suffix == '.yaml' and 'projector_bar_specifications' in path.name
-        #y = YAML()
-        #y.load(path)
 
         return valid
 

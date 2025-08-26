@@ -69,6 +69,12 @@ class Experiment():
             self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
             self.vr_position.set_projector_config(self.projector.experiment_config)
 
+    def __repr__(self):
+        return self.__str__()
+    
+    def __str__(self):
+        return f"Experiment at {self.main_path} with interpreters:\n{'\n'.join([type(interpreter).__name__ for interpreter in self.interpreters])}"
+
     def get_interpreter_type(self, cls : type[RosT])->Optional[RosT]:
         """ Returns interpreter of type cls, if any exists """
         return next(
