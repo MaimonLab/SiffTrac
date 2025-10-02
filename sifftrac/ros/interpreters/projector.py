@@ -99,13 +99,13 @@ class ProjectorInterpreter(
     @property
     def bar_front_angle(self)->float:
         """
-        Specifies how to rotate the 'rotation_z' component to get
-        a bar in front.
+        Specifies the value at which the bar is in front of the
+        fly
         """
         if self.OLD_PROJECTOR_SPEC:
-            return Pi/2 - 174.9*Pi/180
+            return - 174.9*Pi/180
         else:
-            return Pi/2
+            return 0
     
     @property
     def projector_type_schematic(self)->'ndarray':

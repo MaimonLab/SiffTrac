@@ -66,7 +66,7 @@ class Experiment():
                     self.interpreters.append(interpreter_class(file))
     
         if (self.vr_position is not None) and (self.projector is not None):
-            self.vr_position.bar_in_front_angle = self.projector.bar_front_angle
+            self.vr_position.bar_in_front_heading = self.projector.bar_front_angle + np.pi/2
             self.vr_position.set_projector_config(self.projector.experiment_config)
 
     def __repr__(self):

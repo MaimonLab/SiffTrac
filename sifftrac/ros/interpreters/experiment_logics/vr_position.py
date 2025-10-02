@@ -90,7 +90,7 @@ class VRPositionInterpreter(
             file_path : 'PathLike',
         ):
         # can be done appropriately
-        self.bar_in_front_angle : float = 0.0
+        self.bar_in_front_heading : float = 0.0
         self.ball_radius : float = 3.0
         self.projector_config : Optional[List['ConfigParams']] = None
         super().__init__(file_path)
@@ -176,7 +176,7 @@ class VRPositionInterpreter(
         """ Complex valued, in mm"""
         return (
             self.df['complex_pos'].values.astype(np.complex128)
-            * np.exp(1j*self.bar_in_front_angle)
+            * np.exp(1j*self.bar_in_front_heading)
             * self.ball_radius
         )
 
@@ -186,7 +186,7 @@ class VRPositionInterpreter(
         """ In mm """
         return (
             self.df['complex_pos'].values
-            * np.exp(1j*self.bar_in_front_angle)
+            * np.exp(1j*self.bar_in_front_heading)
             * self.ball_radius
         ).real
         
@@ -196,7 +196,7 @@ class VRPositionInterpreter(
         """ In mm """
         return (
             self.df['complex_pos'].values
-            * np.exp(1j*self.bar_in_front_angle)
+            * np.exp(1j*self.bar_in_front_heading)
             * self.ball_radius
         ).imag
         
@@ -234,11 +234,24 @@ class VRPositionInterpreter(
     
     @property
     @memoize_property
-    def vr_heading(self)->FloatArray:
-        """ $Pi/2$ is bar in front, for bar type experiments """
+    def bar_position(self) -> FloatArray:
+        """ In radians, where 0 is bar in front and -pi/2 is bar to the left """
         return np.angle(
-            np.exp(1j*self.df['rotation_z'].values.astype(float))
-            * np.exp(-1j*self.bar_in_front_angle)
+            self.df['rotation_z'].values.astype(float)
+            * np.exp(-1j*self.bar_in_front_heading)
+        )
+
+    @property
+    @memoize_property
+    def vr_heading(self)->FloatArray:
+        """
+        $Pi/2$ is bar in front, for bar type experiments
+        Note that this is the OPPOSITE of the bar position if
+        there is a bar!
+        """
+        return np.angle(
+            np.exp(-1j*self.df['rotation_z'].values.astype(float))
+            * np.exp(-1j*self.bar_in_front_heading)
         )
 
     @property
@@ -277,7 +290,7 @@ class VRPositionInterpreter(
         # to get back to 'complex_pos'
         self.log.df['complex_pos'] = (
             new_position
-            *np.exp(-1j*self.bar_in_front_angle)
+            *np.exp(-1j*self.bar_in_front_heading)
             /self.ball_radius
         )
 
