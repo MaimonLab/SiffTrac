@@ -238,7 +238,6 @@ class VRPositionInterpreter(
         """ In radians, where 0 is bar in front and -pi/2 is bar to the left """
         return np.angle(
             self.df['rotation_z'].values.astype(float)
-            * np.exp(-1j*self.bar_in_front_heading)
         )
 
     @property
