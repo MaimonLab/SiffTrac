@@ -237,20 +237,20 @@ class VRPositionInterpreter(
     def bar_position(self) -> FloatArray:
         """ In radians, where 0 is bar in front and -pi/2 is bar to the left """
         return np.angle(
-            self.df['rotation_z'].values.astype(float)
+            np.exp(1j*self.df['rotation_z'].values.astype(float))
         )
 
     @property
     @memoize_property
     def vr_heading(self)->FloatArray:
         """
-        $Pi/2$ is bar in front, for bar type experiments
+        π/2 is bar in front, for bar type experiments
         Note that this is the OPPOSITE of the bar position if
         there is a bar!
         """
         return np.angle(
             np.exp(-1j*self.df['rotation_z'].values.astype(float))
-            * np.exp(-1j*self.bar_in_front_heading)
+            * np.exp(1j*self.bar_in_front_heading)
         )
 
     @property
@@ -283,7 +283,7 @@ class VRPositionInterpreter(
         # Correct the position
         new_position[jump_idx:] = (
             new_position[jump_idx:] - new_position[jump_idx]
-        ) * np.exp(-1j*jump_angle) + new_position[jump_idx]
+        ) * np.exp(1j*jump_angle) + new_position[jump_idx]
         
         # Have to undo the transformations applied to the position
         # to get back to 'complex_pos'
